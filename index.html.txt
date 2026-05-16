@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模擬超市</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Nunito', 'PingFang HK', 'Microsoft JhengHei', 'sans-serif'] }
+                }
+            }
+        };
+    </script>
+    <style>
+        :root {
+            --bg: #fefce8; --bg-card: #ffffff; --bg-hover: #f5f5f0;
+            --text: #1c1917; --text-muted: #78716c;
+            --primary: #059669; --primary-bg: #d1fae5;
+            --accent: #f59e0b; --accent-bg: #fef3c7;
+            --danger: #ef4444; --danger-bg: #fee2e2;
+            --info: #6366f1; --info-bg: #e0e7ff;
+            --coupon: #a855f7; --coupon-bg: #f3e8ff;
+            --border: #e7e5e4;
+        }
+        .dark {
+            --bg: #0f172a; --bg-card: #1e293b; --bg-hover: #334155;
+            --text: #f1f5f9; --text-muted: #94a3b8;
+            --primary: #34d399; --primary-bg: #064e3b;
+            --accent: #fbbf24; --accent-bg: #78350f;
+            --danger: #f87171; --danger-bg: #7f1d1d;
+            --info: #818cf8; --info-bg: #312e81;
+            --coupon: #c084fc; --coupon-bg: #581c87;
+            --border: #334155;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Nunito', 'PingFang HK', 'Microsoft JhengHei', sans-serif; }
+
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; transition: all .2s ease; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
+        .card:active { transform: scale(.97); }
+
+        .progress-track { background: var(--border); border-radius: 999px; height: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 999px; transition: width .4s ease, background .4s ease; }
+
+        .filter-btn { padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; border: 2px solid var(--border); background: var(--bg-card); cursor: pointer; white-space: nowrap; transition: all .15s ease; }
+        .filter-btn.active { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); }
+
+        .coupon-ticket { background: var(--coupon-bg); border: 2px dashed var(--coupon); border-radius: 10px; padding: 6px 12px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .coupon-ticket.used { opacity: .4; text-decoration: line-through; }
+
+        .discount-tag { display: inline-block; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; animation: pulse-tag 1.5s infinite; }
+        @keyframes pulse-tag { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+        .star { font-size: 24px; transition: all .3s ease; display: inline-block; }
+        .star.filled { animation: star-pop .3s ease forwards; }
+        @keyframes star-pop { 0% { transform: scale(0); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
+
+        .slide-up-enter { animation: slide-up .3s ease-out; }
+        @keyframes slide-up { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .cart-item-enter { animation: cart-slide .25s ease-out; }
+        @keyframes cart-slide { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        @keyframes confetti-fall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+        .confetti { position: fixed; top: -10px; width: 10px; height: 10px; pointer-events: none; z-index: 999; }
+
+        .impulse-flash { animation: flash-border .5s ease infinite alternate; }
+        @keyframes flash-border { from { box-shadow: 0 0 20px var(--danger); } to { box-shadow: 0 0 40px var(--accent); } }
+
+        .grade-badge { font-size: 48px; font-weight: 900; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: grade-pop .5s ease; }
+        @keyframes grade-pop { 0% { transform: scale(0) rotate(-30deg); } 60% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1) rotate(0deg); } }
+
+        .item-card-unaffordable { opacity: .45; filter: grayscale(.3); }
+
+        .toast { animation: toast-in .3s ease, toast-out .3s ease 2.7s forwards; }
+        @keyframes toast-in { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes toast-out { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+
+        .lang-seg { display: inline-flex; border-radius: 999px; overflow: hidden; border: 2px solid var(--border); }
+        .lang-seg button { padding: 5px 16px; font-size: 13px; font-weight: 800; border: none; cursor: pointer; background: var(--bg-card); color: var(--text-muted); transition: all .15s ease; }
+        .lang-seg button.active { background: var(--primary); color: #fff; }
+
+        @media (max-width: 640px) {
+            .item-emoji-lg { font-size: 2rem; }
+            .card { border-radius: 10px; }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div id="app" class="max-w-6xl mx-auto px-3 sm:px-4 py-4"></div>
+    <div style="position:fixed;bottom:12px;right:12px;z-index:9999;font-size:11px;font-weight:800;color:var(--text-muted);background:var(--bg-card);padding:4px 10px;border-radius:8px;border:1px solid var(--border);letter-spacing:.5px;pointer-events:none;">Developed by JC</div>
+    <div id="mute-btn" onclick="toggleMute()" style="position:fixed;bottom:12px;left:12px;z-index:9999;font-size:18px;background:var(--bg-card);padding:5px 10px;border-radius:8px;border:1px solid var(--border);cursor:pointer;user-select:none;transition:transform .15s ease;" onmouseenter="this.style.transform='scale(1.1)'" onmouseleave="this.style.transform='scale(1)'">🔊</div>
+    <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none" style="max-width:320px;"></div>
+
+    <script>
+    /* ════════════════════════════════════
+       DARK MODE
+    ════════════════════════════════════ */
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+    }
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        document.documentElement.classList.toggle('dark', e.matches);
+    });
+
+    /* ════════════════════════════════════
+       I18N — TRANSLATIONS
+    ════════════════════════════════════ */
+    const L = {
+        zh: {
+            title: '模擬超市',
+            subtitle: '在預算內選擇最佳品質！',
+            howToPlay: '📖 玩法說明',
+            rule1: '在預算內買完購物清單上的所有物品',
+            rule2: '比較不同產地、大小的<strong>單位價格</strong>',
+            rule3: '小心虛假折扣——「特價」不一定是最便宜',
+            rule4: '善用優惠券，抵抗衝動消費',
+            rule5: '結帳後獲得詳細評分和購物建議',
+            qualityRef: '🌟 品質參考',
+            items: '件物品',
+            couponUnit: '張優惠券',
+            noCoupon: '無優惠券',
+            back: '← 返回',
+            mode: '模式',
+            budget: '💰 預算',
+            progress: '📋 進度',
+            itemCount: '件商品',
+            sortDefault: '默認排列',
+            sortPriceAsc: '價格 ↑',
+            sortPriceDesc: '價格 ↓',
+            sortUnitAsc: '單位價格 ↑',
+            cart: '🛒 購物車',
+            cartEmpty: '購物車是空的',
+            total: '總計',
+            remainBudget: '剩餘預算',
+            couponCanSave: '🎟️ 優惠券可省',
+            clear: '清空',
+            checkout: '結帳',
+            alreadyInCart: '此物品已在購物車中',
+            overBudget: '預算不足！',
+            foundOnList: '找到清單上的',
+            cartCleared: '已清空購物車',
+            stillNeedPre: '還需要購買',
+            stillNeedSuf: '件清單物品！',
+            flashSale: '⚡ 限時優惠!',
+            disappearIn: '秒後消失',
+            noThanks: '不需要',
+            addToCartBtn: '加入購物車!',
+            shopDone: '購物完成！',
+            scoreDetail: '📊 評分詳情',
+            spendSummary: '💰 花費摘要',
+            shopSpend: '購物支出',
+            couponDiscount: '優惠券折扣',
+            actualPaid: '實付',
+            budgetLabel: '預算',
+            saved: '節省',
+            choiceAnalysis: '🔍 選擇分析',
+            shoppingTips: '💡 購物貼士',
+            backHome: '🏠 返回主頁',
+            scoreBudget: '💰 預算效率',
+            scoreQuality: '🏆 品質選擇',
+            scoreTraps: '🛡️ 陷阱識別',
+            scoreDiscipline: '📋 購物紀律',
+            scoreSmart: '🧠 精明程度',
+            badgeTrap: '⚠️ 陷阱',
+            badgeBest: '✓ 最佳',
+            badgeOk: '○ 尚可',
+            badgeOnly: '唯一選擇',
+            others: '其他',
+            impulseStats: '⚡ 衝動消費統計',
+            appeared: '出現',
+            accepted: '接受',
+            rejected: '拒絕',
+            times: '次',
+            couponSaved: '🎟️ 優惠券節省',
+            couponCat: (cat, d) => `${cat}減$${d}`,
+            couponTotal: (th, d) => `滿$${th}減$${d}`,
+            discLabels: ['限時優惠','特價','會員價','減價','優惠裝','每日精選'],
+            tipBudget: '💡 <strong>預算管理</strong>：優先購買清單上的必需品，比較價格後再決定。',
+            tipTraps: '⚠️ <strong>折扣陷阱</strong>：不要被「特價」標籤迷惑！真正精明的做法是比較<em>單位價格</em>。',
+            tipDiscipline: '📋 <strong>購物紀律</strong>：堅持你的購物清單！衝動購買是超支的主要原因。',
+            tipSmart: '🧮 <strong>單位價格</strong>：養成比較單位價格的習慣——大包裝不一定更便宜！',
+            tipQuality: '🏆 <strong>品質意識</strong>：在預算允許下，選擇更高品質的產品更划算。',
+            tipBalance: '⚖️ <strong>平衡策略</strong>：品質很重要，但也要注意整體預算控制。',
+            generalTips: [
+                '📝 購物前制定清單並堅持執行，可以減少不必要的開支。',
+                '🏷️ 「買一送一」只在你本來就需要兩件時才是真正的優惠。',
+                '⏰ 超市會在不同時段打折生鮮食品，了解你常去超市的打折規律。',
+                '📊 養成記錄常買商品價格的習慣，這樣你能輕易識別真假優惠。',
+                '🔍 貨架眼睛高度的商品通常最貴，嘗試看看上層和下層的選擇。',
+                '🧮 比較單位價格（每100克或每個的價格）是最可靠的省錢方法。',
+                '🛒 避免在飢餓時購物，因為這會增加衝動購買的機會。',
+                '💳 注意「滿額折扣」可能會讓你買下不需要的東西來湊滿金額。'
+            ],
+            // Difficulties
+            diffEasy: '簡單', diffMedium: '中等', diffHard: '困難', diffExpert: '專家',
+            diffEasyDesc: '適合初學者', diffMediumDesc: '需要比較價格', diffHardDesc: '精明消費者挑戰', diffExpertDesc: '最精明的消費者',
+            // Categories
+            catAll:'全部', catStaples:'主食', catMeat:'肉類', catSeafood:'海鮮', catVegetable:'蔬菜', catFruit:'水果', catDairy:'乳製品', catSnacks:'零食', catDrinks:'飲品', catProtein:'蛋白質',
+            // Origins
+            originJapan:'日本', originLocal:'本地', originThailand:'泰國', originChina:'中國',
+            // Freshness
+            freshFresh:'新鮮', freshExpiring:'快到期', freshNearExpiry:'即將過期',
+            // Item names
+            item1:'白米', item2:'豬肉', item3:'雞蛋', item4:'牛奶', item5:'麵包',
+            item6:'蘋果', item7:'香蕉', item8:'橙', item9:'菠菜', item10:'紅蘿蔔',
+            item11:'薯仔', item12:'豆腐', item13:'即食麵', item14:'餅乾', item15:'朱古力',
+            item16:'薯片', item17:'汽水', item18:'綠茶', item19:'魚', item20:'蝦',
+            // Unit labels
+            per100g: '/100g', per100ml: '/100ml', perPiece: '/隻', perSlice: '/個', perBox: '/盒', perPack: '/包', perStick: '/條'
+        },
+        en: {
+            title: 'Supermarket Simulator',
+            subtitle: 'Pick the best quality within budget!',
+            howToPlay: '📖 How to Play',
+            rule1: 'Buy all items on the shopping list within budget',
+            rule2: 'Compare <strong>unit prices</strong> across origins &amp; sizes',
+            rule3: 'Beware of fake discounts — "sale" ≠ cheapest',
+            rule4: 'Use coupons wisely, resist impulse buys',
+            rule5: 'Get a detailed score and tips after checkout',
+            qualityRef: '🌟 Quality Reference',
+            items: ' items',
+            couponUnit: ' coupons',
+            noCoupon: 'No coupons',
+            back: '← Back',
+            mode: ' Mode',
+            budget: '💰 Budget',
+            progress: '📋 Progress',
+            itemCount: ' products',
+            sortDefault: 'Default',
+            sortPriceAsc: 'Price ↑',
+            sortPriceDesc: 'Price ↓',
+            sortUnitAsc: 'Unit Price ↑',
+            cart: '🛒 Cart',
+            cartEmpty: 'Cart is empty',
+            total: 'Total',
+            remainBudget: 'Remaining',
+            couponCanSave: '🎟️ Coupon saves',
+            clear: 'Clear',
+            checkout: 'Checkout',
+            alreadyInCart: 'Item already in cart',
+            overBudget: 'Over budget!',
+            foundOnList: 'Found list item: ',
+            cartCleared: 'Cart cleared',
+            stillNeedPre: 'Still need ',
+            stillNeedSuf: ' list items!',
+            flashSale: '⚡ Flash Sale!',
+            disappearIn: 's left',
+            noThanks: 'No thanks',
+            addToCartBtn: 'Add to cart!',
+            shopDone: 'Shopping Complete!',
+            scoreDetail: '📊 Score Details',
+            spendSummary: '💰 Spending Summary',
+            shopSpend: 'Spent',
+            couponDiscount: 'Coupon discount',
+            actualPaid: 'Actual paid',
+            budgetLabel: 'Budget',
+            saved: 'Saved',
+            choiceAnalysis: '🔍 Choice Analysis',
+            shoppingTips: '💡 Shopping Tips',
+            backHome: '🏠 Back to Home',
+            scoreBudget: '💰 Budget Efficiency',
+            scoreQuality: '🏆 Quality Choice',
+            scoreTraps: '🛡️ Trap Detection',
+            scoreDiscipline: '📋 Shopping Discipline',
+            scoreSmart: '🧠 Smart Shopping',
+            badgeTrap: '⚠️ Trap',
+            badgeBest: '✓ Best',
+            badgeOk: '○ OK',
+            badgeOnly: 'Only option',
+            others: 'Others',
+            impulseStats: '⚡ Impulse Buy Stats',
+            appeared: 'Shown',
+            accepted: 'Accepted',
+            rejected: 'Rejected',
+            times: '',
+            couponSaved: '🎟️ Coupon Savings',
+            couponCat: (cat, d) => `$${d} off ${cat}`,
+            couponTotal: (th, d) => `$${d} off over $${th}`,
+            discLabels: ['Flash Deal','Special','Member Price','Sale','Value Pack','Daily Pick'],
+            tipBudget: '💡 <strong>Budget</strong>: Prioritise list essentials and compare prices before buying.',
+            tipTraps: '⚠️ <strong>Discount Traps</strong>: Don\'t be fooled by "sale" tags — compare <em>unit prices</em> instead.',
+            tipDiscipline: '📋 <strong>Discipline</strong>: Stick to your shopping list! Impulse buys are the #1 cause of overspending.',
+            tipSmart: '🧮 <strong>Unit Price</strong>: Always compare unit prices — bigger packs aren\'t always better value!',
+            tipQuality: '🏆 <strong>Quality</strong>: When budget allows, higher quality products can be more worthwhile.',
+            tipBalance: '⚖️ <strong>Balance</strong>: Quality matters, but keep your overall budget in check.',
+            generalTips: [
+                '📝 Make a shopping list before you go and stick to it to avoid unnecessary spending.',
+                '🏷️ "Buy one get one free" is only a deal if you actually need two.',
+                '⏰ Supermarkets discount fresh food at certain times — learn the patterns.',
+                '📊 Keep a mental note of regular prices so you can spot real vs. fake deals.',
+                '🔍 Items at eye level are usually the most expensive — check upper and lower shelves.',
+                '🧮 Comparing unit prices (per 100g or per item) is the most reliable way to save.',
+                '🛒 Never shop when hungry — it increases impulse purchases.',
+                '💳 Beware of "spend $X to save $Y" deals that make you buy things you don\'t need.'
+            ],
+            diffEasy: 'Easy', diffMedium: 'Medium', diffHard: 'Hard', diffExpert: 'Expert',
+            diffEasyDesc: 'For beginners', diffMediumDesc: 'Compare prices', diffHardDesc: 'Smart shopper challenge', diffExpertDesc: 'Ultimate smart shopper',
+            catAll:'All', catStaples:'Staples', catMeat:'Meat', catSeafood:'Seafood', catVegetable:'Vegetables', catFruit:'Fruit', catDairy:'Dairy', catSnacks:'Snacks', catDrinks:'Drinks', catProtein:'Protein',
+            originJapan:'Japan', originLocal:'Local', originThailand:'Thailand', originChina:'China',
+            freshFresh:'Fresh', freshExpiring:'Expiring', freshNearExpiry:'Near Expiry',
+            item1:'Rice', item2:'Pork', item3:'Eggs', item4:'Milk', item5:'Bread',
+            item6:'Apple', item7:'Banana', item8:'Orange', item9:'Spinach', item10:'Carrot',
+            item11:'Potato', item12:'Tofu', item13:'Instant Noodles', item14:'Biscuits', item15:'Chocolate',
+            item16:'Chips', item17:'Soda', item18:'Green Tea', item19:'Fish', item20:'Shrimp',
+            per100g: '/100g', per100ml: '/100ml', perPiece: '/pc', perSlice: '/pc', perBox: '/box', perPack: '/pk', perStick: '/pc'
+        }
+    };
+
+    function t(key) { return L[S.lang][key] || L.zh[key] || key; }
+
+    // Translate data lookups
+    function originName(key) { return t('origin' + key.charAt(0).toUpperCase() + key.slice(1)); }
+    function catName(key) { return t('cat' + key.charAt(0).toUpperCase() + key.slice(1)); }
+    function itemName(id) { return t('item' + id); }
+    function freshName(key) {
+        if (key === 'fresh') return t('freshFresh');
+        if (key === 'expiring') return t('freshExpiring');
+        return t('freshNearExpiry');
+    }
+    function unitLabel(base) {
+        const map = { '/100g':'per100g', '/100ml':'per100ml', '/隻':'perPiece', '/個':'perSlice', '/盒':'perBox', '/包':'perPack', '/條':'perStick' };
+        return t(map[base.uLabel] || 'per100g');
+    }
+    function diffName(key) { return t('diff' + key.charAt(0).toUpperCase() + key.slice(1)); }
+    function diffDesc(key) { return t('diff' + key.charAt(0).toUpperCase() + key.slice(1) + 'Desc'); }
+    function discLabel() { const labels = t('discLabels'); return labels[Math.floor(Math.random() * labels.length)]; }
+    function couponDesc(c) {
+        if (c.type === 'cat') return t('couponCat')(catName(c.cat), c.disc);
+        return t('couponTotal')(c.thresh, c.disc);
+    }
+
+    /* ════════════════════════════════════
+       CONFIGURATION
+    ════════════════════════════════════ */
+    const ORIGINS = {
+        japan:    { emoji: '🏆', quality: 4, priceMul: 1.4 },
+        local:    { emoji: '🥈', quality: 3, priceMul: 1.0 },
+        thailand: { emoji: '🥉', quality: 2, priceMul: 0.85 },
+        china:    { emoji: '💰', quality: 1, priceMul: 0.7 }
+    };
+
+    const CAT_KEYS = ['all','staples','meat','seafood','vegetable','fruit','dairy','snacks','drinks','protein'];
+    const CAT_EMOJI = { all:'🛒', staples:'🍚', meat:'🥩', seafood:'🐟', vegetable:'🥬', fruit:'🍎', dairy:'🥛', snacks:'🍪', drinks:'🥤', protein:'🥜' };
+
+    const DIFF_KEYS = ['easy','medium','hard','expert'];
+    const DIFF_ICONS = { easy:'🌱', medium:'🔥', hard:'💪', expert:'🏆' };
+    const DIFF_CFG = {
+        easy:   { listSize: 3, budgetMul: 1.45, storeSize: 12, variants: 2, traps: false, trapChance: 0, impulse: false, impulseMs: 0, fresh: false, coupons: 0 },
+        medium: { listSize: 5, budgetMul: 1.25, storeSize: 16, variants: 3, traps: true, trapChance: 0.28, impulse: true, impulseMs: 28000, fresh: true, coupons: 2 },
+        hard:   { listSize: 6, budgetMul: 1.12, storeSize: 20, variants: 3, traps: true, trapChance: 0.4, impulse: true, impulseMs: 20000, fresh: true, coupons: 3 },
+        expert: { listSize: 7, budgetMul: 1.06, storeSize: 24, variants: 4, traps: true, trapChance: 0.5, impulse: true, impulseMs: 15000, fresh: true, coupons: 4 }
+    };
+
+    const FRESHNESS = {
+        fresh:      { color: '#22c55e', icon: '🟢', disc: 0, qPen: 0 },
+        expiring:   { color: '#f59e0b', icon: '🟡', disc: 0.25, qPen: 1 },
+        nearExpiry: { color: '#ef4444', icon: '🔴', disc: 0.45, qPen: 2 }
+    };
+
+    const BASE_ITEMS = [
+        { id:1,  emoji:'🍚', cat:'staples',   per:false, pBase:3.0,  mType:'w', uLabel:'/100g', packs:[{s:500,l:'500g'},{s:1000,l:'1kg'},{s:2000,l:'2kg'}] },
+        { id:2,  emoji:'🥩', cat:'meat',      per:true,  pBase:12.0, mType:'w', uLabel:'/100g', packs:[{s:250,l:'250g'},{s:500,l:'500g'}] },
+        { id:3,  emoji:'🥚', cat:'dairy',     per:true,  pBase:2.5,  mType:'c', uLabel:'/隻',   packs:[{s:6,l:'6'},{s:10,l:'10'},{s:30,l:'30'}] },
+        { id:4,  emoji:'🥛', cat:'dairy',     per:true,  pBase:2.0,  mType:'v', uLabel:'/100ml',packs:[{s:250,l:'250ml'},{s:500,l:'500ml'},{s:1000,l:'1L'}] },
+        { id:5,  emoji:'🍞', cat:'staples',   per:true,  pBase:3.5,  mType:'c', uLabel:'/個',   packs:[{s:1,l:'1'},{s:4,l:'4'},{s:8,l:'8'}] },
+        { id:6,  emoji:'🍎', cat:'fruit',     per:true,  pBase:5.0,  mType:'c', uLabel:'/個',   packs:[{s:3,l:'3'},{s:6,l:'6'}] },
+        { id:7,  emoji:'🍌', cat:'fruit',     per:true,  pBase:2.0,  mType:'c', uLabel:'/條',   packs:[{s:4,l:'4'},{s:8,l:'8'},{s:12,l:'12'}] },
+        { id:8,  emoji:'🍊', cat:'fruit',     per:true,  pBase:4.0,  mType:'c', uLabel:'/個',   packs:[{s:3,l:'3'},{s:6,l:'6'},{s:10,l:'10'}] },
+        { id:9,  emoji:'🥬', cat:'vegetable', per:true,  pBase:2.5,  mType:'w', uLabel:'/100g', packs:[{s:200,l:'200g'},{s:500,l:'500g'}] },
+        { id:10, emoji:'🥕', cat:'vegetable', per:true,  pBase:1.5,  mType:'w', uLabel:'/100g', packs:[{s:300,l:'300g'},{s:500,l:'500g'},{s:1000,l:'1kg'}] },
+        { id:11, emoji:'🥔', cat:'vegetable', per:false, pBase:1.2,  mType:'w', uLabel:'/100g', packs:[{s:500,l:'500g'},{s:1000,l:'1kg'},{s:2000,l:'2kg'}] },
+        { id:12, emoji:'🫘', cat:'protein',   per:true,  pBase:5.0,  mType:'c', uLabel:'/盒',   packs:[{s:1,l:'1'},{s:2,l:'2'},{s:3,l:'3'}] },
+        { id:13, emoji:'🍜', cat:'snacks',    per:false, pBase:4.0,  mType:'c', uLabel:'/包',   packs:[{s:1,l:'1'},{s:5,l:'5'},{s:10,l:'10'}] },
+        { id:14, emoji:'🍪', cat:'snacks',    per:false, pBase:4.0,  mType:'w', uLabel:'/100g', packs:[{s:150,l:'150g'},{s:300,l:'300g'},{s:500,l:'500g'}] },
+        { id:15, emoji:'🍫', cat:'snacks',    per:false, pBase:6.0,  mType:'w', uLabel:'/100g', packs:[{s:100,l:'100g'},{s:200,l:'200g'}] },
+        { id:16, emoji:'🍟', cat:'snacks',    per:false, pBase:5.0,  mType:'w', uLabel:'/100g', packs:[{s:60,l:'60g'},{s:150,l:'150g'},{s:300,l:'300g'}] },
+        { id:17, emoji:'🥤', cat:'drinks',    per:false, pBase:1.5,  mType:'v', uLabel:'/100ml',packs:[{s:330,l:'330ml'},{s:500,l:'500ml'},{s:1500,l:'1.5L'}] },
+        { id:18, emoji:'🍵', cat:'drinks',    per:false, pBase:2.0,  mType:'v', uLabel:'/100ml',packs:[{s:250,l:'250ml'},{s:500,l:'500ml'},{s:1000,l:'1L'}] },
+        { id:19, emoji:'🐟', cat:'seafood',   per:true,  pBase:10.0, mType:'w', uLabel:'/100g', packs:[{s:300,l:'300g'},{s:500,l:'500g'}] },
+        { id:20, emoji:'🦐', cat:'seafood',   per:true,  pBase:18.0, mType:'w', uLabel:'/100g', packs:[{s:200,l:'200g'},{s:500,l:'500g'}] }
+    ];
+
+    /* ════════════════════════════════════
+       STATE
+    ════════════════════════════════════ */
+    let S = {
+        lang: 'en',
+        screen: 'welcome',
+        diff: null, cfg: null,
+        budget: 0, spent: 0,
+        cart: [], shopList: [], store: [],
+        coupons: [], couponSavings: 0, muted: false,
+        impulseTimer: null, impulseCount: 0, impulseAccepted: 0, impulseRejected: 0, currentImpulse: null,
+        filter: 'all', sortBy: 'default', cartOpen: false,
+        scores: null
+    };
+
+    /* ════════════════════════════════════
+       UTILITIES
+    ════════════════════════════════════ */
+    function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+    function rand(a,b){return a+Math.random()*(b-a);}
+    function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+
+    function toast(msg,type){
+        const c=document.getElementById('toast-container');
+        const colors={success:'var(--primary)',error:'var(--danger)',warning:'var(--accent)',info:'var(--info)'};
+        const d=document.createElement('div');
+        d.className='toast';
+        d.style.cssText=`background:${colors[type]||colors.info};color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;font-weight:700;pointer-events:auto;box-shadow:0 4px 12px rgba(0,0,0,.2);`;
+        d.textContent=msg; c.appendChild(d); setTimeout(()=>d.remove(),3000);
+    }
+
+    /* ════════════════════════════════════
+       SOUND — Enhanced Web Audio
+    ════════════════════════════════════ */
+    let audioCtx;
+    function initAudio(){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+    function resumeAudio(){if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();}
+
+    function playTone(freq,dur,type,vol,delay){
+        if(!audioCtx||S.muted)return;
+        try{const t0=audioCtx.currentTime+(delay||0);const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+        o.connect(g);g.connect(audioCtx.destination);o.frequency.setValueAtTime(freq,t0);o.type=type||'sine';
+        g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol||0.08,t0+0.01);
+        g.gain.exponentialRampToValueAtTime(0.001,t0+dur);o.start(t0);o.stop(t0+dur);}catch(e){}
+    }
+    function playNoise(dur,vol,delay){
+        if(!audioCtx||S.muted)return;
+        try{const t0=audioCtx.currentTime+(delay||0);const len=Math.floor(audioCtx.sampleRate*dur);
+        const buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate);const d=buf.getChannelData(0);
+        for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*0.5;
+        const src=audioCtx.createBufferSource(),g=audioCtx.createGain(),flt=audioCtx.createBiquadFilter();
+        src.buffer=buf;flt.type='highpass';flt.frequency.setValueAtTime(3000,t0);
+        src.connect(flt);flt.connect(g);g.connect(audioCtx.destination);
+        g.gain.setValueAtTime(vol||0.05,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+        src.start(t0);src.stop(t0+dur);}catch(e){}
+    }
+    function playSweep(f1,f2,dur,type,vol,delay){
+        if(!audioCtx||S.muted)return;
+        try{const t0=audioCtx.currentTime+(delay||0);const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+        o.connect(g);g.connect(audioCtx.destination);o.type=type||'sine';
+        o.frequency.setValueAtTime(f1,t0);o.frequency.exponentialRampToValueAtTime(f2,t0+dur);
+        g.gain.setValueAtTime(vol||0.06,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+        o.start(t0);o.stop(t0+dur);}catch(e){}
+    }
+
+    /* — Sound Effects — */
+    function sfxClick(){playTone(800,0.06,'sine',0.06);playTone(1200,0.04,'sine',0.03,0.02);}
+
+    function sfxAdd(){
+        playTone(660,0.15,'sine',0.07);playTone(1320,0.1,'sine',0.03);
+        playTone(880,0.18,'sine',0.07,0.08);playTone(1760,0.12,'sine',0.03,0.08);
+        playNoise(0.03,0.02);
+    }
+    function sfxRemove(){playTone(500,0.12,'triangle',0.06);playTone(350,0.15,'triangle',0.05,0.06);}
+
+    function sfxSuccess(){
+        [523,659,784,1047].forEach(function(f,i){playTone(f,0.3,'sine',0.07,i*0.12);playTone(f*2,0.2,'sine',0.02,i*0.12);});
+        playNoise(0.05,0.02,0.48);
+    }
+    function sfxError(){playTone(200,0.2,'sawtooth',0.06);playTone(180,0.25,'square',0.03,0.05);playTone(150,0.15,'sawtooth',0.04,0.15);}
+
+    function sfxImpulse(){
+        [600,800,600,800,1000].forEach(function(f,i){playTone(f,0.1,'square',0.05,i*0.08);});
+        playNoise(0.06,0.03);
+    }
+    function sfxGameStart(){
+        [392,440,523,587,659,784].forEach(function(f,i){playTone(f,0.15,'sine',0.06,i*0.07);playTone(f*1.5,0.1,'triangle',0.02,i*0.07);});
+        playNoise(0.08,0.03,0.42);
+    }
+    function sfxCheckout(){
+        playNoise(0.04,0.06);playTone(1200,0.05,'square',0.04,0.05);
+        playTone(2400,0.3,'sine',0.06,0.08);playTone(3600,0.25,'sine',0.03,0.08);
+        playTone(2400,0.15,'sine',0.04,0.2);
+    }
+    function sfxFoundItem(){
+        playTone(880,0.12,'sine',0.06);playTone(1100,0.12,'sine',0.06,0.06);
+        playTone(1320,0.18,'sine',0.07,0.12);playTone(2640,0.1,'sine',0.02,0.12);
+    }
+    function sfxRejectImpulse(){
+        playTone(523,0.1,'sine',0.05);playTone(659,0.1,'sine',0.05,0.08);
+        playTone(784,0.2,'sine',0.06,0.16);playNoise(0.03,0.02,0.16);
+    }
+    function sfxCartOpen(){playTone(400,0.08,'sine',0.04);playTone(600,0.1,'sine',0.04,0.04);}
+    function sfxCartClose(){playTone(600,0.08,'sine',0.04);playTone(400,0.1,'sine',0.04,0.04);}
+    function sfxClearCart(){
+        playNoise(0.15,0.04);playSweep(800,200,0.25,'triangle',0.04);
+    }
+    function toggleMute(){
+        S.muted=!S.muted;const el=document.getElementById('mute-btn');
+        if(el)el.textContent=S.muted?'🔇':'🔊';
+        if(!S.muted){resumeAudio();sfxClick();}
+    }
+
+    function launchConfetti(){
+        const cols=['#ef4444','#f59e0b','#22c55e','#6366f1','#a855f7','#ec4899','#06b6d4'];
+        for(let i=0;i<60;i++){const el=document.createElement('div');el.className='confetti';el.style.cssText=`left:${Math.random()*100}vw;background:${cols[i%cols.length]};border-radius:${Math.random()>.5?'50%':'2px'};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;animation:confetti-fall ${1.5+Math.random()*2}s ease-in ${Math.random()*0.8}s forwards;`;document.body.appendChild(el);setTimeout(()=>el.remove(),4000);}
+    }
+
+    /* ════════════════════════════════════
+       GAME LOGIC
+    ════════════════════════════════════ */
+    function startGame(diff){
+        S.diff=diff; S.cfg=DIFF_CFG[diff]; S.cart=[]; S.spent=0;
+        S.filter='all'; S.sortBy='default'; S.cartOpen=false;
+        S.impulseCount=0; S.impulseAccepted=0; S.impulseRejected=0; S.currentImpulse=null;
+        S.couponSavings=0; S.scores=null;
+
+        const picked=shuffle(BASE_ITEMS).slice(0,S.cfg.listSize);
+        S.shopList=picked.map(b=>({baseId:b.id,emoji:b.emoji,found:false}));
+        generateStore();
+
+        let minCost=0;
+        S.shopList.forEach(li=>{
+            const v=S.store.filter(si=>si.baseId===li.baseId);
+            if(v.length) minCost+=Math.min(...v.map(x=>x.price));
+        });
+        S.budget=Math.round(minCost*S.cfg.budgetMul/5)*5;
+        S.budget=Math.max(60,S.budget);
+
+        S.coupons=genCoupons(S.cfg.coupons);
+        S.screen='shopping'; render(); sfxGameStart();
+        stopImpulse(); if(S.cfg.impulse) startImpulseTimer();
+    }
+
+    function generateStore(){
+        S.store=[]; let uid=1; const oKeys=Object.keys(ORIGINS);
+
+        S.shopList.forEach(li=>{
+            const base=BASE_ITEMS.find(b=>b.id===li.baseId);
+            const nv=Math.min(S.cfg.variants,oKeys.length);
+            shuffle(oKeys).slice(0,nv).forEach(ok=>{S.store.push(makeItem(uid++,base,ok,true));});
+        });
+
+        const nonList=shuffle(BASE_ITEMS.filter(b=>!S.shopList.some(li=>li.baseId===b.id)));
+        let rem=S.cfg.storeSize-S.store.length;
+        for(const base of nonList){
+            if(rem<=0)break;
+            const nv=Math.min(clamp(Math.ceil(Math.random()*2),1,2),rem);
+            shuffle(oKeys).slice(0,nv).forEach(ok=>{if(rem<=0)return;S.store.push(makeItem(uid++,base,ok,false));rem--;});
+        }
+        S.store=shuffle(S.store);
+    }
+
+    function makeItem(id,base,originKey,isListItem){
+        const origin=ORIGINS[originKey];
+        const pi=Math.floor(Math.random()*base.packs.length), pack=base.packs[pi];
+        let unitP=base.pBase*origin.priceMul*rand(0.82,1.18)*rand(0.9,1.1);
+        let totalPrice=base.mType==='c'?Math.round(unitP*pack.s):Math.round(unitP*pack.s/100);
+        totalPrice=Math.max(3,totalPrice);
+
+        let freshness=null;
+        if(S.cfg.fresh&&base.per){
+            const r=Math.random();
+            if(r<0.12) freshness='nearExpiry'; else if(r<0.3) freshness='expiring'; else freshness='fresh';
+            if(freshness!=='fresh') totalPrice=Math.max(3,Math.round(totalPrice*(1-FRESHNESS[freshness].disc)));
+        }
+
+        const displayUnit=base.mType==='c'?totalPrice/pack.s:(totalPrice/pack.s)*100;
+
+        let fakeDisc=false,fakeOriginal=0,discLabelIdx=0;
+        if(S.cfg.traps&&Math.random()<S.cfg.trapChance){
+            fakeDisc=true; fakeOriginal=Math.round(totalPrice*rand(1.15,1.4));
+            discLabelIdx=Math.floor(Math.random()*6);
+        }
+
+        return {
+            id,baseId:base.id,emoji:base.emoji,cat:base.cat,originKey,
+            quality:origin.quality-(freshness?FRESHNESS[freshness].qPen:0),
+            packSize:pack.s,sizeLabel:pack.l,mType:base.mType,uLabel:base.uLabel,
+            price:totalPrice,unitPrice:displayUnit,
+            perishable:base.per,freshness,
+            fakeDisc,fakeOriginal,discLabelIdx,
+            isListItem
+        };
+    }
+
+    function genCoupons(count){
+        if(!count)return [];
+        const coupons=[], cats=CAT_KEYS.filter(c=>c!=='all');
+        for(let i=0;i<count;i++){
+            if(Math.random()<0.55){
+                const cat=cats[Math.floor(Math.random()*cats.length)];
+                const disc=[3,5,5,8,10][Math.floor(Math.random()*5)];
+                coupons.push({id:i,type:'cat',cat,disc,used:false});
+            } else {
+                const thresh=[60,80,100,120][Math.floor(Math.random()*4)];
+                const disc=[5,8,10][Math.floor(Math.random()*3)];
+                coupons.push({id:i,type:'total',thresh,disc,used:false});
+            }
+        }
+        return coupons;
+    }
+
+    /* ════════════════════════════════════
+       CART
+    ════════════════════════════════════ */
+    function addToCart(itemId){
+        if(S.cart.includes(itemId)){toast(t('alreadyInCart'),'warning');return;}
+        const item=S.store.find(i=>i.id===itemId);
+        if(!item)return;
+        if(S.spent+item.price>S.budget){toast(t('overBudget'),'error');sfxError();return;}
+        S.cart.push(itemId); S.spent+=item.price; updateListStatus();
+        const li=S.shopList.find(l=>l.baseId===item.baseId);
+        if(li&&li.found){sfxFoundItem();toast(t('foundOnList')+itemName(li.baseId)+'!','success');}
+        else{sfxAdd();}
+        render();
+    }
+    function removeFromCart(itemId){
+        const idx=S.cart.indexOf(itemId); if(idx===-1)return;
+        const item=S.store.find(i=>i.id===itemId);
+        S.cart.splice(idx,1); S.spent-=item.price; updateListStatus(); sfxRemove(); render();
+    }
+    function clearCart(){S.cart=[];S.spent=0;S.shopList.forEach(li=>li.found=false);render();}
+    function updateListStatus(){
+        const ids=S.cart.map(id=>S.store.find(i=>i.id===id)?.baseId);
+        S.shopList.forEach(li=>{li.found=ids.includes(li.baseId);});
+    }
+
+    /* ════════════════════════════════════
+       IMPULSE
+    ════════════════════════════════════ */
+    function startImpulseTimer(){S.impulseTimer=setInterval(()=>{if(S.screen==='shopping'&&!S.currentImpulse)showImpulse();},S.cfg.impulseMs);}
+    function stopImpulse(){if(S.impulseTimer){clearInterval(S.impulseTimer);S.impulseTimer=null;}S.currentImpulse=null;}
+
+    function showImpulse(){
+        const cands=S.store.filter(si=>!si.isListItem&&!S.cart.includes(si.id));
+        if(!cands.length)return;
+        const item=cands[Math.floor(Math.random()*cands.length)];
+        const fo=Math.round(item.price*rand(1.3,1.7));
+        S.currentImpulse={...item,impulseOriginal:fo,impulseDisc:Math.round((1-item.price/fo)*100),countdown:10};
+        S.impulseCount++; sfxImpulse(); renderImpulse();
+
+        const timer=setInterval(()=>{
+            if(!S.currentImpulse){clearInterval(timer);return;}
+            S.currentImpulse.countdown--;
+            if(S.currentImpulse.countdown<=0){S.impulseRejected++;S.currentImpulse=null;clearInterval(timer);renderImpulse();}
+            else renderImpulseTimer();
+        },1000);
+    }
+    function acceptImpulse(){
+        if(!S.currentImpulse)return;
+        if(S.spent+S.currentImpulse.price>S.budget){toast(t('overBudget'),'error');sfxError();return;}
+        S.cart.push(S.currentImpulse.id);S.spent+=S.currentImpulse.price;S.impulseAccepted++;
+        S.currentImpulse=null;updateListStatus();sfxAdd();renderImpulse();render();
+    }
+    function rejectImpulse(){S.impulseRejected++;S.currentImpulse=null;sfxRejectImpulse();renderImpulse();}
+
+    /* ════════════════════════════════════
+       CHECKOUT & SCORING
+    ════════════════════════════════════ */
+    function checkout(){
+        const found=S.shopList.filter(li=>li.found).length;
+        if(found<S.shopList.length){toast(t('stillNeedPre')+(S.shopList.length-found)+t('stillNeedSuf'),'warning');return;}
+        stopImpulse(); sfxCheckout();
+        S.couponSavings=applyCoupons();
+        S.scores=calcScores();
+        S.screen='results'; render();
+        if(S.scores.overall>=3.5){sfxSuccess();setTimeout(launchConfetti,300);}
+    }
+
+    function applyCoupons(){
+        let savings=0; S.coupons.forEach(c=>c.used=false);
+        [...S.coupons].sort((a,b)=>b.disc-a.disc).forEach(c=>{
+            if(c.type==='cat'){
+                const el=S.cart.map(id=>S.store.find(i=>i.id===id)).filter(i=>i&&i.cat===c.cat);
+                if(el.length){savings+=Math.min(c.disc,el[0].price);c.used=true;}
+            } else if(c.type==='total'&&S.spent>=c.thresh){savings+=c.disc;c.used=true;}
+        });
+        return savings;
+    }
+
+    function calcScores(){
+        const sc={};
+        const eff=S.spent-S.couponSavings, ratio=eff/S.budget;
+        if(ratio<=0.6)sc.budget=5;else if(ratio<=0.72)sc.budget=4;else if(ratio<=0.84)sc.budget=3;else if(ratio<=0.94)sc.budget=2;else sc.budget=1;
+
+        let qS=0,qC=0;
+        S.cart.forEach(id=>{const it=S.store.find(i=>i.id===id);if(it){qS+=Math.max(1,it.quality);qC++;}});
+        sc.quality=clamp(Math.round((qC?qS/qC:0)*1.25),1,5);
+
+        let tA=0,tF=0;
+        S.cart.forEach(id=>{const it=S.store.find(i=>i.id===id);if(!it||!it.fakeDisc)return;const sb=S.store.filter(si=>si.baseId===it.baseId);if(sb.some(si=>si.id!==it.id&&si.unitPrice<it.unitPrice*0.95)){tA++;tF++;}});
+        const cbi=new Set(S.cart.map(id=>S.store.find(i=>i.id===id)?.baseId));
+        S.store.forEach(si=>{if(!si.fakeDisc||!cbi.has(si.baseId)||S.cart.includes(si.id))return;if(S.store.filter(x=>x.baseId===si.baseId).some(x=>x.id!==si.id&&x.unitPrice<si.unitPrice*0.95))tA++;});
+        sc.traps=tA>0?clamp(Math.round(((tA-tF)/tA)*5),1,5):5;
+
+        const nl=S.cart.filter(id=>{const it=S.store.find(i=>i.id===id);return it&&!it.isListItem;}).length;
+        sc.discipline=clamp(5-nl-S.impulseAccepted,1,5);
+
+        let sS=0,sC=0;
+        S.cart.forEach(id=>{const it=S.store.find(i=>i.id===id);if(!it)return;const sb=S.store.filter(si=>si.baseId===it.baseId);if(sb.length>1){sS+=Math.min(...sb.map(si=>si.unitPrice))/it.unitPrice;sC++;}});
+        sc.smart=sC>0?clamp(Math.round((sS/sC)*5),1,5):5;
+
+        sc.overall=Math.round(((sc.budget+sc.quality+sc.traps+sc.discipline+sc.smart)/5)*10)/10;
+        return sc;
+    }
+
+    function getGrade(o){
+        if(o>=4.5)return{letter:'S',color:'#fbbf24',bg:'#78350f'};
+        if(o>=3.8)return{letter:'A',color:'#22c55e',bg:'#064e3b'};
+        if(o>=3.0)return{letter:'B',color:'#06b6d4',bg:'#164e63'};
+        if(o>=2.0)return{letter:'C',color:'#f59e0b',bg:'#78350f'};
+        return{letter:'D',color:'#ef4444',bg:'#7f1d1d'};
+    }
+
+    function genTips(){
+        const tips=[],sc=S.scores;
+        if(sc.budget<=2)tips.push(t('tipBudget'));
+        if(sc.traps<=2)tips.push(t('tipTraps'));
+        if(sc.discipline<=2)tips.push(t('tipDiscipline'));
+        if(sc.smart<=2)tips.push(t('tipSmart'));
+        if(sc.quality<=2)tips.push(t('tipQuality'));
+        if(sc.quality>=4&&sc.budget<=2)tips.push(t('tipBalance'));
+        const gt=t('generalTips');
+        while(tips.length<3){const x=gt[Math.floor(Math.random()*gt.length)];if(!tips.includes(x))tips.push(x);}
+        return tips.slice(0,4);
+    }
+
+    /* ════════════════════════════════════
+       RENDERING
+    ════════════════════════════════════ */
+    function render(){
+        const app=document.getElementById('app');
+        if(S.screen==='welcome') app.innerHTML=renderWelcome();
+        else if(S.screen==='shopping') app.innerHTML=renderShopping();
+        else if(S.screen==='results') app.innerHTML=renderResults();
+        document.documentElement.lang=S.lang==='en'?'en':'zh-HK';
+        document.title=t('title');
+        bindEvents();
+    }
+
+    /* — WELCOME — */
+    function renderWelcome(){
+        const dCards=DIFF_KEYS.map((key,i)=>{
+            const cfg=DIFF_CFG[key];
+            const cpn=cfg.coupons?cfg.coupons+t('couponUnit'):t('noCoupon');
+            return `
+            <div class="card p-4 cursor-pointer text-center slide-up-enter" data-action="start" data-diff="${key}" style="animation-delay:${i*0.08}s">
+                <div class="text-3xl mb-1">${DIFF_ICONS[key]}</div>
+                <div class="font-extrabold text-lg">${diffName(key)}</div>
+                <div class="text-xs mt-1" style="color:var(--text-muted)">${diffDesc(key)}</div>
+                <div class="text-xs mt-2" style="color:var(--text-muted)">${cfg.listSize}${t('items')} · ${cpn}</div>
+            </div>`;
+        }).join('');
+
+        return `
+        <div class="flex flex-col items-center justify-center" style="min-height:92vh;">
+            <!-- Language Toggle -->
+            <div class="lang-seg mb-6 slide-up-enter">
+                <button class="${S.lang==='en'?'active':''}" data-action="set-lang" data-lang="en">English</button>
+                <button class="${S.lang==='zh'?'active':''}" data-action="set-lang" data-lang="zh">繁體中文</button>
+            </div>
+
+            <div class="text-center mb-8 slide-up-enter">
+                <div class="text-6xl mb-3" style="animation:star-pop .5s ease;">🛒</div>
+                <h1 class="text-4xl font-black tracking-tight mb-1">${t('title')}</h1>
+                <p class="text-base font-semibold" style="color:var(--text-muted)">${t('subtitle')}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3 max-w-md w-full mb-8">${dCards}</div>
+            <div class="max-w-md w-full text-sm slide-up-enter" style="color:var(--text-muted);animation-delay:.3s;">
+                <h3 class="font-extrabold mb-2 text-base" style="color:var(--text)">${t('howToPlay')}</h3>
+                <ul class="space-y-1.5">
+                    <li>• ${t('rule1')}</li><li>• ${t('rule2')}</li><li>• ${t('rule3')}</li><li>• ${t('rule4')}</li><li>• ${t('rule5')}</li>
+                </ul>
+                <div class="mt-4 p-3 rounded-xl" style="background:var(--primary-bg);">
+                    <div class="font-bold mb-1" style="color:var(--primary)">${t('qualityRef')}</div>
+                    <div class="flex flex-wrap gap-3 text-xs">
+                        ${Object.keys(ORIGINS).map(k=>`<span>${ORIGINS[k].emoji} ${originName(k)}</span>`).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    /* — SIZE LABEL helper — */
+    function sizeLabel(it){
+        const base=BASE_ITEMS.find(b=>b.id===it.baseId);
+        if(!base)return it.sizeLabel;
+        if(base.mType==='w'||base.mType==='v') return it.sizeLabel; // 500g, 1L etc – universal
+        // count items: append translated unit
+        const unitMap={'/隻':S.lang==='en'?' pcs':' 隻','/個':S.lang==='en'?' pcs':' 個','/盒':S.lang==='en'?' boxes':' 盒','/包':S.lang==='en'?' pks':' 包','/條':S.lang==='en'?' pcs':' 條'};
+        return it.sizeLabel+(unitMap[base.uLabel]||'');
+    }
+
+    /* — SHOPPING — */
+    function renderShopping(){
+        const found=S.shopList.filter(li=>li.found).length, total=S.shopList.length;
+        const bPct=S.budget>0?Math.round(S.spent/S.budget*100):0;
+        const bCol=bPct>85?'var(--danger)':bPct>60?'var(--accent)':'var(--primary)';
+        const pPct=total>0?Math.round(found/total*100):0;
+
+        let items=[...S.store];
+        if(S.filter!=='all')items=items.filter(i=>i.cat===S.filter);
+        if(S.sortBy==='price-asc')items.sort((a,b)=>a.price-b.price);
+        else if(S.sortBy==='price-desc')items.sort((a,b)=>b.price-a.price);
+        else if(S.sortBy==='unit-asc')items.sort((a,b)=>a.unitPrice-b.unitPrice);
+
+        const fTabs=CAT_KEYS.map(key=>{
+            const cnt=key==='all'?S.store.length:S.store.filter(i=>i.cat===key).length;
+            if(key!=='all'&&cnt===0)return '';
+            return `<button class="filter-btn ${S.filter===key?'active':''}" data-action="filter" data-cat="${key}">${CAT_EMOJI[key]} ${catName(key)}</button>`;
+        }).join('');
+
+        const cpnHtml=S.coupons.length?`<div class="flex gap-2 overflow-x-auto pb-1 mb-3">${S.coupons.map(c=>`<div class="coupon-ticket ${c.used?'used':''}" style="color:var(--coupon)">🎟️ ${couponDesc(c)}</div>`).join('')}</div>`:'';
+
+        const slHtml=S.shopList.map(li=>`
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-bold ${li.found?'line-through':''}" style="background:${li.found?'var(--primary-bg)':'var(--accent-bg)'};opacity:${li.found?'0.5':'1'}">${li.emoji} ${itemName(li.baseId)} ${li.found?'✓':''}</span>
+        `).join('');
+
+        const iCards=items.map(it=>renderItemCard(it)).join('');
+
+        return `
+        <div class="sticky top-0 z-30 pb-2 pt-1" style="background:var(--bg);">
+            <div class="flex items-center justify-between mb-2">
+                <button class="text-sm font-bold px-3 py-1 rounded-lg" style="background:var(--bg-card);border:1px solid var(--border)" data-action="back-home">${t('back')}</button>
+                <div class="text-sm font-extrabold" style="color:var(--primary)">${DIFF_ICONS[S.diff]} ${diffName(S.diff)}${t('mode')}</div>
+            </div>
+            <div class="flex items-center gap-3 mb-2">
+                <div class="flex-1">
+                    <div class="flex justify-between text-xs font-bold mb-1"><span>${t('budget')}</span><span style="color:${bCol}">HK$${S.spent} / HK$${S.budget}</span></div>
+                    <div class="progress-track"><div class="progress-fill" style="width:${bPct}%;background:${bCol}"></div></div>
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between text-xs font-bold mb-1"><span>${t('progress')}</span><span style="color:var(--primary)">${found}/${total}</span></div>
+                    <div class="progress-track"><div class="progress-fill" style="width:${pPct}%;background:var(--primary)"></div></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-1.5 mb-2">${slHtml}</div>
+            ${cpnHtml}
+        </div>
+
+        <div class="flex overflow-x-auto gap-2 mb-3 pb-1" style="-webkit-overflow-scrolling:touch">${fTabs}</div>
+
+        <div class="flex justify-between items-center mb-3">
+            <span class="text-xs font-bold" style="color:var(--text-muted)">${items.length}${t('itemCount')}</span>
+            <select class="text-xs font-bold rounded-lg px-2 py-1.5" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);min-height:32px;font-size:16px" data-action="sort">
+                <option value="default" ${S.sortBy==='default'?'selected':''}>${t('sortDefault')}</option>
+                <option value="price-asc" ${S.sortBy==='price-asc'?'selected':''}>${t('sortPriceAsc')}</option>
+                <option value="price-desc" ${S.sortBy==='price-desc'?'selected':''}>${t('sortPriceDesc')}</option>
+                <option value="unit-asc" ${S.sortBy==='unit-asc'?'selected':''}>${t('sortUnitAsc')}</option>
+            </select>
+        </div>
+
+        <div class="flex gap-4">
+            <div class="flex-1"><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">${iCards}</div></div>
+            <div class="hidden lg:block w-72 flex-shrink-0"><div class="sticky top-44">${renderCartPanel(false)}</div></div>
+        </div>
+
+        <button class="lg:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-2xl shadow-xl flex items-center justify-center text-2xl font-bold" style="background:var(--primary);color:#fff;" data-action="open-cart">🛒<span class="absolute -top-1 -right-1 w-6 h-6 rounded-full text-xs font-black flex items-center justify-center" style="background:var(--accent);color:#000;">${S.cart.length}</span></button>
+
+        <div id="mobile-cart" class="${S.cartOpen?'':'hidden'} fixed inset-0 z-50">
+            <div class="absolute inset-0" style="background:rgba(0,0,0,.5)" data-action="close-cart"></div>
+            <div class="absolute bottom-0 left-0 right-0 rounded-t-2xl p-4 overflow-y-auto" style="background:var(--bg-card);max-height:80vh;">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-black">${t('cart')}</h3>
+                    <button class="text-2xl" data-action="close-cart">✕</button>
+                </div>
+                ${renderCartPanel(true)}
+            </div>
+        </div>
+
+        ${renderImpulseModal()}`;
+    }
+
+    function renderItemCard(it){
+        const inCart=S.cart.includes(it.id), canAfford=S.spent+it.price<=S.budget;
+        const onList=S.shopList.some(li=>li.baseId===it.baseId);
+        let cls='card p-3 cursor-pointer relative overflow-hidden';
+        if(inCart)cls+=' ring-2';
+        if(!canAfford&&!inCart)cls+=' item-card-unaffordable';
+        const ring=inCart?'outline:2px solid var(--primary);':'';
+
+        let freshH='';
+        if(it.freshness&&it.freshness!=='fresh') freshH=`<div class="text-xs font-bold mt-1" style="color:${FRESHNESS[it.freshness].color}">${FRESHNESS[it.freshness].icon} ${freshName(it.freshness)}</div>`;
+
+        const dLabels=t('discLabels');
+        let priceH;
+        if(it.fakeDisc){
+            priceH=`<div class="discount-tag mb-1">${dLabels[it.discLabelIdx]}</div>
+            <div class="flex items-center justify-center gap-1.5 flex-wrap"><span class="line-through text-xs" style="color:var(--text-muted)">$${it.fakeOriginal}</span><span class="text-lg font-black" style="color:var(--danger)">$${it.price}</span></div>`;
+        } else {
+            priceH=`<div class="text-lg font-black" style="color:var(--primary)">HK$${it.price}</div>`;
+        }
+
+        const uLbl=unitLabel(BASE_ITEMS.find(b=>b.id===it.baseId));
+
+        return `
+        <div class="${cls}" style="${ring}" data-action="add-to-cart" data-item-id="${it.id}">
+            <div class="flex justify-between items-start mb-1">
+                <span class="text-xs font-bold px-1.5 py-0.5 rounded" style="background:var(--bg);border:1px solid var(--border)">${ORIGINS[it.originKey].emoji} ${originName(it.originKey)}</span>
+                ${onList?'<span class="text-xs">📋</span>':''}
+            </div>
+            ${freshH}
+            <div class="text-center my-2">
+                <div class="text-3xl sm:text-4xl item-emoji-lg">${it.emoji}</div>
+                <div class="font-extrabold text-sm mt-1">${itemName(it.baseId)}</div>
+                <div class="text-xs" style="color:var(--text-muted)">${sizeLabel(it)}</div>
+            </div>
+            <div class="text-center">
+                ${priceH}
+                <div class="text-xs mt-0.5" style="color:var(--text-muted)">$${it.unitPrice.toFixed(1)}${uLbl}</div>
+            </div>
+            ${inCart?`<div class="absolute inset-0 flex items-center justify-center" style="background:rgba(5,150,105,.15)"><span class="text-2xl font-black" style="color:var(--primary)">✓</span></div>`:''}
+        </div>`;
+    }
+
+    function renderCartPanel(isMobile){
+        const cItems=S.cart.map(id=>S.store.find(i=>i.id===id)).filter(Boolean);
+        let iHtml;
+        if(!cItems.length){
+            iHtml=`<div class="text-center py-8" style="color:var(--text-muted)">${t('cartEmpty')}</div>`;
+        } else {
+            iHtml=cItems.map(it=>{
+                const uLbl=unitLabel(BASE_ITEMS.find(b=>b.id===it.baseId));
+                return `<div class="cart-item-enter flex items-center justify-between py-2 px-2 rounded-lg mb-1" style="background:var(--bg)">
+                <div class="flex items-center gap-2 flex-1 min-w-0"><span class="text-lg">${it.emoji}</span>
+                <div class="min-w-0"><div class="text-xs font-bold truncate">${itemName(it.baseId)}(${originName(it.originKey)})</div><div class="text-xs" style="color:var(--text-muted)">${sizeLabel(it)} · $${it.unitPrice.toFixed(1)}${uLbl}</div></div></div>
+                <div class="flex items-center gap-2 flex-shrink-0"><span class="font-black text-sm">$${it.price}</span>
+                <button class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style="background:var(--danger-bg);color:var(--danger)" data-action="remove" data-item-id="${it.id}">✕</button></div></div>`;
+            }).join('');
+        }
+
+        let cpnPrev='';
+        if(S.coupons.length>0){
+            let pv=0;
+            S.coupons.forEach(c=>{
+                if(c.type==='cat'){const el=cItems.filter(i=>i.cat===c.cat);if(el.length)pv+=Math.min(c.disc,el[0].price);}
+                else if(c.type==='total'&&S.spent>=c.thresh)pv+=c.disc;
+            });
+            if(pv>0) cpnPrev=`<div class="text-xs font-bold mt-1" style="color:var(--coupon)">${t('couponCanSave')} -HK$${pv}</div>`;
+        }
+
+        const allFound=S.shopList.every(li=>li.found);
+
+        return `<div class="card p-4">
+            <h3 class="font-black text-lg mb-3">${t('cart')} (${S.cart.length})</h3>
+            <div style="max-height:${isMobile?'40vh':'300px'};overflow-y:auto;">${iHtml}</div>
+            <div class="border-t mt-3 pt-3" style="border-color:var(--border)">
+                <div class="flex justify-between font-black text-lg"><span>${t('total')}</span><span>HK$${S.spent}</span></div>
+                ${cpnPrev}
+                <div class="text-xs mt-1" style="color:var(--text-muted)">${t('remainBudget')}: HK$${S.budget-S.spent}</div>
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button class="flex-1 py-2.5 rounded-xl font-bold text-sm" style="background:var(--danger-bg);color:var(--danger)" data-action="clear-cart">${t('clear')}</button>
+                <button class="flex-1 py-2.5 rounded-xl font-bold text-sm" style="background:${allFound?'var(--primary)':'var(--border)'};color:${allFound?'#fff':'var(--text-muted)'}" data-action="checkout" ${allFound?'':'disabled'}>${t('checkout')} ${allFound?'✓':''}</button>
+            </div>
+        </div>`;
+    }
+
+    function renderImpulseModal(){
+        if(!S.currentImpulse)return '';
+        const imp=S.currentImpulse;
+        return `<div class="fixed inset-0 z-[60] flex items-center justify-center" id="impulse-overlay">
+            <div class="absolute inset-0" style="background:rgba(0,0,0,.65)"></div>
+            <div class="relative mx-4 max-w-sm w-full rounded-2xl p-6 text-center impulse-flash" style="background:var(--bg-card)">
+                <div class="text-xs font-black mb-2 px-3 py-1 rounded-full inline-block" style="background:var(--danger);color:#fff">${t('flashSale')}</div>
+                <div class="text-5xl my-3">${imp.emoji}</div>
+                <div class="font-extrabold text-xl mb-1">${itemName(imp.baseId)} (${originName(imp.originKey)})</div>
+                <div class="text-sm mb-2" style="color:var(--text-muted)">${sizeLabel(imp)}</div>
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="line-through text-sm" style="color:var(--text-muted)">HK$${imp.impulseOriginal}</span>
+                    <span class="text-2xl font-black" style="color:var(--danger)">HK$${imp.price}</span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded" style="background:var(--danger);color:#fff">-${imp.impulseDisc}%</span>
+                </div>
+                <div class="text-sm font-bold mb-4" style="color:var(--accent)" id="impulse-timer">⏱️ ${imp.countdown}${t('disappearIn')}</div>
+                <div class="flex gap-3">
+                    <button class="flex-1 py-3 rounded-xl font-bold" style="background:var(--border);color:var(--text)" data-action="reject-impulse">${t('noThanks')}</button>
+                    <button class="flex-1 py-3 rounded-xl font-bold" style="background:var(--danger);color:#fff" data-action="accept-impulse">${t('addToCartBtn')}</button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function renderImpulse(){
+        const ex=document.getElementById('impulse-overlay');if(ex)ex.remove();
+        if(S.currentImpulse){const tmp=document.createElement('div');tmp.innerHTML=renderImpulseModal();if(tmp.firstElementChild)document.body.appendChild(tmp.firstElementChild);bindImpulseEvents();}
+    }
+    function renderImpulseTimer(){
+        const el=document.getElementById('impulse-timer');
+        if(el&&S.currentImpulse) el.textContent=`⏱️ ${S.currentImpulse.countdown}${t('disappearIn')}`;
+    }
+
+    /* — RESULTS — */
+    function renderResults(){
+        const sc=S.scores, grade=getGrade(sc.overall), tips=genTips();
+        const effTotal=S.spent-S.couponSavings;
+
+        const cats=[
+            {label:t('scoreBudget'),score:sc.budget},{label:t('scoreQuality'),score:sc.quality},
+            {label:t('scoreTraps'),score:sc.traps},{label:t('scoreDiscipline'),score:sc.discipline},
+            {label:t('scoreSmart'),score:sc.smart}
+        ];
+        const starsH=cats.map((c,ci)=>{
+            const st=Array.from({length:5},(_,i)=>`<span class="star ${i<c.score?'filled':''}" style="animation-delay:${ci*0.15+i*0.08}s;color:${i<c.score?'var(--accent)':'var(--border)'}">${i<c.score?'★':'☆'}</span>`).join('');
+            return `<div class="flex items-center justify-between py-2"><span class="text-sm font-bold">${c.label}</span><div>${st}</div></div>`;
+        }).join('');
+
+        const analysis=S.cart.map(id=>{
+            const it=S.store.find(i=>i.id===id);if(!it)return '';
+            const sb=S.store.filter(si=>si.baseId===it.baseId);
+            const uLbl=unitLabel(BASE_ITEMS.find(b=>b.id===it.baseId));
+            const nm=itemName(it.baseId), on=originName(it.originKey);
+
+            if(sb.length<=1)return `<div class="py-2 px-3 rounded-lg mb-2" style="background:var(--bg)"><span class="text-sm">${it.emoji} ${nm}(${on}) ${sizeLabel(it)} — <strong>HK$${it.price}</strong></span><span class="text-xs ml-1" style="color:var(--text-muted)">${t('badgeOnly')}</span></div>`;
+
+            const bestUP=Math.min(...sb.map(si=>si.unitPrice));
+            const isOpt=Math.abs(it.unitPrice-bestUP)/bestUP<0.05;
+            const fell=it.fakeDisc&&!isOpt;
+
+            let badge,bStyle;
+            if(fell){badge=t('badgeTrap');bStyle='background:var(--danger-bg);color:var(--danger)';}
+            else if(isOpt){badge=t('badgeBest');bStyle='background:var(--primary-bg);color:var(--primary)';}
+            else {badge=t('badgeOk');bStyle='background:var(--accent-bg);color:var(--accent)';}
+
+            const dLabels=t('discLabels');
+            const alts=sb.filter(si=>si.id!==it.id).map(si=>`${ORIGINS[si.originKey].emoji}${originName(si.originKey)} ${sizeLabel(si)} $${si.price} ($${si.unitPrice.toFixed(1)}${uLbl})`).join(', ');
+
+            return `<div class="py-2 px-3 rounded-lg mb-2" style="background:var(--bg)">
+                <div class="flex items-center justify-between flex-wrap gap-1"><span class="text-sm font-bold">${it.emoji} ${nm}(${on}) ${sizeLabel(it)}</span><span class="text-xs font-bold px-2 py-0.5 rounded" style="${bStyle}">${badge}</span></div>
+                <div class="text-xs mt-1">HK$${it.price} · $${it.unitPrice.toFixed(1)}${uLbl} ${it.fakeDisc?`<span style="color:var(--danger)">「${dLabels[it.discLabelIdx]}」</span>`:''}</div>
+                ${alts?`<div class="text-xs mt-1" style="color:var(--text-muted)">${t('others')}: ${alts}</div>`:''}
+            </div>`;
+        }).join('');
+
+        const tipsH=tips.map(x=>`<li class="text-sm py-1">${x}</li>`).join('');
+
+        const impH=S.impulseCount>0?`<div class="py-2 px-3 rounded-lg mb-3" style="background:var(--info-bg)"><div class="text-sm font-bold" style="color:var(--info)">${t('impulseStats')}</div><div class="text-xs mt-1">${t('appeared')} ${S.impulseCount}${t('times')} · ${t('accepted')} ${S.impulseAccepted}${t('times')} · ${t('rejected')} ${S.impulseRejected}${t('times')}</div></div>`:'';
+        const cpnH=S.couponSavings>0?`<div class="py-2 px-3 rounded-lg mb-3" style="background:var(--coupon-bg)"><div class="text-sm font-bold" style="color:var(--coupon)">${t('couponSaved')}</div><div class="text-xs mt-1">-HK$${S.couponSavings}</div></div>`:'';
+
+        return `<div class="max-w-lg mx-auto py-6">
+            <div class="text-center mb-6 slide-up-enter">
+                <div class="grade-badge mx-auto mb-3" style="background:${grade.bg};color:${grade.color}">${grade.letter}</div>
+                <h2 class="text-2xl font-black mb-1">${t('shopDone')}</h2>
+                <div class="text-lg font-bold" style="color:var(--accent)">⭐ ${sc.overall}/5</div>
+            </div>
+
+            <div class="card p-4 mb-4 slide-up-enter" style="animation-delay:.1s"><h3 class="font-extrabold mb-2">${t('scoreDetail')}</h3>${starsH}</div>
+
+            <div class="card p-4 mb-4 slide-up-enter" style="animation-delay:.2s">
+                <h3 class="font-extrabold mb-2">${t('spendSummary')}</h3>
+                <div class="text-sm space-y-1">
+                    <div class="flex justify-between"><span>${t('shopSpend')}</span><span class="font-bold">HK$${S.spent}</span></div>
+                    ${S.couponSavings>0?`<div class="flex justify-between" style="color:var(--coupon)"><span>${t('couponDiscount')}</span><span class="font-bold">-HK$${S.couponSavings}</span></div>`:''}
+                    <div class="flex justify-between border-t pt-1" style="border-color:var(--border)"><span class="font-bold">${t('actualPaid')}</span><span class="font-bold">HK$${effTotal}</span></div>
+                    <div class="flex justify-between"><span>${t('budgetLabel')}</span><span>HK$${S.budget}</span></div>
+                    <div class="flex justify-between" style="color:var(--primary)"><span>${t('saved')}</span><span class="font-bold">HK$${S.budget-effTotal}</span></div>
+                </div>
+            </div>
+
+            ${impH}${cpnH}
+
+            <div class="card p-4 mb-4 slide-up-enter" style="animation-delay:.3s"><h3 class="font-extrabold mb-2">${t('choiceAnalysis')}</h3><div style="max-height:300px;overflow-y:auto">${analysis}</div></div>
+            <div class="card p-4 mb-4 slide-up-enter" style="animation-delay:.4s"><h3 class="font-extrabold mb-2">${t('shoppingTips')}</h3><ul class="space-y-1">${tipsH}</ul></div>
+            <div class="text-center slide-up-enter" style="animation-delay:.5s"><button class="px-8 py-3 rounded-xl font-black text-lg" style="background:var(--primary);color:#fff" data-action="play-again">${t('backHome')}</button></div>
+        </div>`;
+    }
+
+    /* ════════════════════════════════════
+       EVENT HANDLING
+    ════════════════════════════════════ */
+    function bindEvents(){
+        const app=document.getElementById('app');
+        app.removeEventListener('click',handleClick);
+        app.addEventListener('click',handleClick);
+        const sel=app.querySelector('[data-action="sort"]');
+        if(sel){sel.removeEventListener('change',handleSort);sel.addEventListener('change',handleSort);}
+        bindImpulseEvents();
+    }
+    function bindImpulseEvents(){
+        document.querySelectorAll('[data-action="accept-impulse"]').forEach(el=>{el.onclick=e=>{e.stopPropagation();acceptImpulse();};});
+        document.querySelectorAll('[data-action="reject-impulse"]').forEach(el=>{el.onclick=e=>{e.stopPropagation();rejectImpulse();};});
+    }
+
+    function handleClick(e){
+        const btn=e.target.closest('[data-action]');if(!btn)return;
+        resumeAudio();
+        const a=btn.dataset.action;
+        switch(a){
+            case 'start': sfxClick(); startGame(btn.dataset.diff); break;
+            case 'add-to-cart': addToCart(parseInt(btn.dataset.itemId)); break;
+            case 'remove': e.stopPropagation(); removeFromCart(parseInt(btn.dataset.itemId)); break;
+            case 'clear-cart': sfxClearCart(); clearCart(); toast(t('cartCleared'),'info'); break;
+            case 'checkout': sfxClick(); checkout(); break;
+            case 'open-cart': sfxCartOpen(); S.cartOpen=true; render(); break;
+            case 'close-cart': sfxCartClose(); S.cartOpen=false; render(); break;
+            case 'filter': S.filter=btn.dataset.cat; sfxClick(); render(); break;
+            case 'back-home': sfxClick(); stopImpulse(); S.screen='welcome'; render(); break;
+            case 'play-again': sfxClick(); S.screen='welcome'; render(); break;
+            case 'set-lang': S.lang=btn.dataset.lang; sfxClick(); render(); break;
+        }
+    }
+    function handleSort(e){S.sortBy=e.target.value;render();}
+
+    /* ════════════════════════════════════
+       INIT
+    ════════════════════════════════════ */
+    initAudio();
+    render();
+    </script>
+</body>
+</html>
+
