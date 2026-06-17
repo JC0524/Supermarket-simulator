@@ -4,62 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>模擬超市</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Nunito', 'PingFang HK', 'Microsoft JhengHei', 'sans-serif'] }
+                    fontFamily: { sans: ['Fredoka', 'Nunito', 'PingFang HK', 'Microsoft JhengHei', 'sans-serif'] }
                 }
             }
         };
     </script>
     <style>
         :root {
-            --bg: #fefce8; --bg-card: #ffffff; --bg-hover: #f5f5f0;
-            --text: #1c1917; --text-muted: #78716c;
-            --primary: #059669; --primary-bg: #d1fae5;
-            --accent: #f59e0b; --accent-bg: #fef3c7;
-            --danger: #ef4444; --danger-bg: #fee2e2;
-            --info: #6366f1; --info-bg: #e0e7ff;
-            --coupon: #a855f7; --coupon-bg: #f3e8ff;
-            --border: #e7e5e4;
+            --bg: #c7e8f3; --bg-card: #ffffff; --bg-hover: #dff2f8;
+            --header-bg: #f5c842; --header-accent: #e8524a;
+            --text: #1a1a2e; --text-muted: #6b7280;
+            --primary: #2ab573; --primary-bg: #d4f5e4;
+            --accent: #f5c842; --accent-bg: #fef6d8;
+            --danger: #e8524a; --danger-bg: #fde0de;
+            --info: #6c7ee1; --info-bg: #e2e6fa;
+            --coupon: #b06ce6; --coupon-bg: #f0e4fa;
+            --border: #2a2a3a; --border-light: #d1d5db;
+            --badge-green: #a3e4b8; --badge-purple: #dab3f5; --badge-peach: #fdd9b5;
+            --pastel-pink: #f5c6d0; --pastel-mint: #b8ece0; --pastel-lavender: #c9b8f0;
+            --card-border-w: 2.5px;
         }
         .dark {
-            --bg: #0f172a; --bg-card: #1e293b; --bg-hover: #334155;
+            --bg: #111827; --bg-card: #1e2840; --bg-hover: #2a3652;
+            --header-bg: #7a6421; --header-accent: #b8423c;
             --text: #f1f5f9; --text-muted: #94a3b8;
-            --primary: #34d399; --primary-bg: #064e3b;
-            --accent: #fbbf24; --accent-bg: #78350f;
-            --danger: #f87171; --danger-bg: #7f1d1d;
-            --info: #818cf8; --info-bg: #312e81;
-            --coupon: #c084fc; --coupon-bg: #581c87;
-            --border: #334155;
+            --primary: #3dd68c; --primary-bg: #0f3d26;
+            --accent: #f5c842; --accent-bg: #5c4a1a;
+            --danger: #f87171; --danger-bg: #5c1f1f;
+            --info: #818cf8; --info-bg: #2d2f5e;
+            --coupon: #c084fc; --coupon-bg: #3d1c5e;
+            --border: #4b5563; --border-light: #374151;
+            --badge-green: #1a4a2e; --badge-purple: #3a2258; --badge-peach: #5c3d1a;
+            --pastel-pink: #5c2a3a; --pastel-mint: #1a4a3d; --pastel-lavender: #3a2d5c;
+            --card-border-w: 2px;
         }
-        body { background: var(--bg); color: var(--text); font-family: 'Nunito', 'PingFang HK', 'Microsoft JhengHei', sans-serif; }
+        body { background: var(--bg); color: var(--text); font-family: 'Fredoka', 'Nunito', 'PingFang HK', 'Microsoft JhengHei', sans-serif; }
 
-        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; transition: all .2s ease; }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
-        .card:active { transform: scale(.97); }
+        .card { background: var(--bg-card); border: var(--card-border-w) solid var(--border); border-radius: 18px; transition: all .2s ease; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 6px 0 var(--border); }
+        .card:active { transform: translateY(0px); box-shadow: none; }
 
-        .progress-track { background: var(--border); border-radius: 999px; height: 10px; overflow: hidden; }
+        .header-bar { background: var(--header-bg); border-bottom: 4px solid var(--header-accent); padding: 14px 16px; border-radius: 0 0 20px 20px; margin-bottom: 6px; }
+
+        .stat-badge { display: inline-flex; flex-direction: column; align-items: center; padding: 6px 14px; border-radius: 12px; border: 2px solid var(--border); font-weight: 700; min-width: 60px; }
+        .stat-badge .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
+        .stat-badge .stat-value { font-size: 20px; font-weight: 900; line-height: 1.1; }
+
+        .progress-track { background: var(--border-light); border-radius: 999px; height: 12px; overflow: hidden; border: 1.5px solid var(--border); }
         .progress-fill { height: 100%; border-radius: 999px; transition: width .4s ease, background .4s ease; }
 
-        .filter-btn { padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; border: 2px solid var(--border); background: var(--bg-card); cursor: pointer; white-space: nowrap; transition: all .15s ease; }
-        .filter-btn.active { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); }
+        .filter-btn { padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 700; border: 2px solid var(--border); background: var(--bg-card); cursor: pointer; white-space: nowrap; transition: all .15s ease; }
+        .filter-btn.active { border-color: var(--border); background: var(--text); color: var(--bg-card); }
+        .filter-btn:hover:not(.active) { background: var(--bg-hover); }
 
-        .coupon-ticket { background: var(--coupon-bg); border: 2px dashed var(--coupon); border-radius: 10px; padding: 6px 12px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .pill-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: 999px; font-size: 15px; font-weight: 800; border: 2.5px solid var(--border); background: var(--text); color: var(--bg-card); cursor: pointer; transition: all .15s ease; letter-spacing: 0.3px; }
+        .pill-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 0 var(--border); }
+        .pill-btn:active { transform: translateY(0); box-shadow: none; }
+        .pill-btn.secondary { background: var(--bg-card); color: var(--text); }
+        .pill-btn.danger { background: var(--danger); color: #fff; border-color: var(--border); }
+
+        .icon-circle { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 2px solid var(--border); }
+        .icon-circle.pink { background: var(--pastel-pink); }
+        .icon-circle.mint { background: var(--pastel-mint); }
+        .icon-circle.lavender { background: var(--pastel-lavender); }
+
+        .coupon-ticket { background: var(--coupon-bg); border: 2.5px dashed var(--coupon); border-radius: 12px; padding: 8px 14px; font-size: 12px; font-weight: 700; white-space: nowrap; }
         .coupon-ticket.used { opacity: .4; text-decoration: line-through; }
 
-        .discount-tag { display: inline-block; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; animation: pulse-tag 1.5s infinite; }
-        @keyframes pulse-tag { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .discount-tag { display: inline-block; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 999px; animation: pulse-tag 1.5s infinite; border: 1.5px solid var(--border); }
+        @keyframes pulse-tag { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
 
         .star { font-size: 24px; transition: all .3s ease; display: inline-block; }
         .star.filled { animation: star-pop .3s ease forwards; }
         @keyframes star-pop { 0% { transform: scale(0); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
 
-        .slide-up-enter { animation: slide-up .3s ease-out; }
+        .slide-up-enter { animation: slide-up .35s cubic-bezier(.22,1,.36,1); }
         @keyframes slide-up { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         .cart-item-enter { animation: cart-slide .25s ease-out; }
@@ -68,32 +94,37 @@
         @keyframes confetti-fall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
         .confetti { position: fixed; top: -10px; width: 10px; height: 10px; pointer-events: none; z-index: 999; }
 
-        .impulse-flash { animation: flash-border .5s ease infinite alternate; }
-        @keyframes flash-border { from { box-shadow: 0 0 20px var(--danger); } to { box-shadow: 0 0 40px var(--accent); } }
+        .impulse-flash { animation: flash-border .5s ease infinite alternate; border: 3px solid var(--border); }
+        @keyframes flash-border { from { box-shadow: 0 0 20px var(--danger), 0 8px 0 var(--border); } to { box-shadow: 0 0 40px var(--accent), 0 8px 0 var(--border); } }
 
-        .grade-badge { font-size: 48px; font-weight: 900; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: grade-pop .5s ease; }
+        .grade-badge { font-size: 48px; font-weight: 900; width: 88px; height: 88px; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: grade-pop .5s ease; border: 3px solid var(--border); }
         @keyframes grade-pop { 0% { transform: scale(0) rotate(-30deg); } 60% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1) rotate(0deg); } }
 
         .item-card-unaffordable { opacity: .45; filter: grayscale(.3); }
 
-        .toast { animation: toast-in .3s ease, toast-out .3s ease 2.7s forwards; }
+        .toast { animation: toast-in .3s ease, toast-out .3s ease 2.7s forwards; border: 2px solid var(--border); }
         @keyframes toast-in { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes toast-out { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
 
-        .lang-seg { display: inline-flex; border-radius: 999px; overflow: hidden; border: 2px solid var(--border); }
-        .lang-seg button { padding: 5px 16px; font-size: 13px; font-weight: 800; border: none; cursor: pointer; background: var(--bg-card); color: var(--text-muted); transition: all .15s ease; }
-        .lang-seg button.active { background: var(--primary); color: #fff; }
+        .lang-seg { display: inline-flex; border-radius: 999px; overflow: hidden; border: 2.5px solid var(--border); }
+        .lang-seg button { padding: 7px 20px; font-size: 14px; font-weight: 800; border: none; cursor: pointer; background: var(--bg-card); color: var(--text-muted); transition: all .15s ease; }
+        .lang-seg button.active { background: var(--text); color: var(--bg-card); }
+
+        .shop-list-tag { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; border: 2px solid var(--border); }
+
+        .section-title { font-size: 18px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 
         @media (max-width: 640px) {
             .item-emoji-lg { font-size: 2rem; }
-            .card { border-radius: 10px; }
+            .card { border-radius: 14px; }
+            .header-bar { border-radius: 0 0 14px 14px; }
         }
     </style>
 </head>
 <body class="min-h-screen">
     <div id="app" class="max-w-6xl mx-auto px-3 sm:px-4 py-4"></div>
-    <div style="position:fixed;bottom:12px;right:12px;z-index:9999;font-size:11px;font-weight:800;color:var(--text-muted);background:var(--bg-card);padding:4px 10px;border-radius:8px;border:1px solid var(--border);letter-spacing:.5px;pointer-events:none;">Developed by JC</div>
-    <div id="mute-btn" onclick="toggleMute()" style="position:fixed;bottom:12px;left:12px;z-index:9999;font-size:18px;background:var(--bg-card);padding:5px 10px;border-radius:8px;border:1px solid var(--border);cursor:pointer;user-select:none;transition:transform .15s ease;" onmouseenter="this.style.transform='scale(1.1)'" onmouseleave="this.style.transform='scale(1)'">🔊</div>
+    <div style="position:fixed;bottom:12px;right:12px;z-index:9999;font-size:11px;font-weight:800;color:var(--text-muted);background:var(--bg-card);padding:5px 12px;border-radius:999px;border:2px solid var(--border);letter-spacing:.5px;pointer-events:none;">Developed by JC</div>
+    <div id="mute-btn" onclick="toggleMute()" style="position:fixed;bottom:12px;left:12px;z-index:9999;font-size:18px;background:var(--bg-card);padding:6px 12px;border-radius:999px;border:2px solid var(--border);cursor:pointer;user-select:none;transition:transform .15s ease;" onmouseenter="this.style.transform='scale(1.1)'" onmouseleave="this.style.transform='scale(1)'">🔊</div>
     <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none" style="max-width:320px;"></div>
 
     <script>
@@ -412,7 +443,7 @@
         const colors={success:'var(--primary)',error:'var(--danger)',warning:'var(--accent)',info:'var(--info)'};
         const d=document.createElement('div');
         d.className='toast';
-        d.style.cssText=`background:${colors[type]||colors.info};color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;font-weight:700;pointer-events:auto;box-shadow:0 4px 12px rgba(0,0,0,.2);`;
+        d.style.cssText=`background:${colors[type]||colors.info};color:#fff;padding:12px 18px;border-radius:14px;font-size:14px;font-weight:700;pointer-events:auto;box-shadow:0 4px 0 rgba(0,0,0,.2);`;
         d.textContent=msg; c.appendChild(d); setTimeout(()=>d.remove(),3000);
     }
 
@@ -738,15 +769,16 @@
 
     /* — WELCOME — */
     function renderWelcome(){
+        const pastelCols = ['pink','mint','lavender','pink'];
         const dCards=DIFF_KEYS.map((key,i)=>{
             const cfg=DIFF_CFG[key];
             const cpn=cfg.coupons?cfg.coupons+t('couponUnit'):t('noCoupon');
             return `
-            <div class="card p-4 cursor-pointer text-center slide-up-enter" data-action="start" data-diff="${key}" style="animation-delay:${i*0.08}s">
-                <div class="text-3xl mb-1">${DIFF_ICONS[key]}</div>
-                <div class="font-extrabold text-lg">${diffName(key)}</div>
-                <div class="text-xs mt-1" style="color:var(--text-muted)">${diffDesc(key)}</div>
-                <div class="text-xs mt-2" style="color:var(--text-muted)">${cfg.listSize}${t('items')} · ${cpn}</div>
+            <div class="card p-5 cursor-pointer text-center slide-up-enter" data-action="start" data-diff="${key}" style="animation-delay:${i*0.08}s">
+                <div class="icon-circle ${pastelCols[i]} mx-auto mb-3"><span class="text-2xl">${DIFF_ICONS[key]}</span></div>
+                <div class="pill-btn mx-auto mb-2" style="font-size:14px;padding:7px 20px;">${diffName(key)}</div>
+                <div class="text-xs font-semibold" style="color:var(--text-muted)">${diffDesc(key)}</div>
+                <div class="text-xs mt-2 font-bold" style="color:var(--text-muted)">${cfg.listSize}${t('items')} · ${cpn}</div>
             </div>`;
         }).join('');
 
@@ -758,20 +790,20 @@
                 <button class="${S.lang==='zh'?'active':''}" data-action="set-lang" data-lang="zh">繁體中文</button>
             </div>
 
-            <div class="text-center mb-8 slide-up-enter">
-                <div class="text-6xl mb-3" style="animation:star-pop .5s ease;">🛒</div>
-                <h1 class="text-4xl font-black tracking-tight mb-1">${t('title')}</h1>
-                <p class="text-base font-semibold" style="color:var(--text-muted)">${t('subtitle')}</p>
+            <div class="header-bar text-center mb-6 slide-up-enter" style="border-radius:20px;max-width:500px;width:100%;">
+                <div class="text-5xl mb-2" style="animation:star-pop .5s ease;filter:drop-shadow(2px 2px 0 rgba(0,0,0,.15));">🛒</div>
+                <h1 class="text-3xl sm:text-4xl font-black tracking-tight mb-1" style="text-shadow:1px 1px 0 rgba(0,0,0,.08);">${t('title')}</h1>
+                <p class="text-sm font-bold" style="color:var(--text);opacity:.7;">${t('subtitle')}</p>
             </div>
-            <div class="grid grid-cols-2 gap-3 max-w-md w-full mb-8">${dCards}</div>
-            <div class="max-w-md w-full text-sm slide-up-enter" style="color:var(--text-muted);animation-delay:.3s;">
-                <h3 class="font-extrabold mb-2 text-base" style="color:var(--text)">${t('howToPlay')}</h3>
-                <ul class="space-y-1.5">
+            <div class="grid grid-cols-2 gap-4 max-w-md w-full mb-8">${dCards}</div>
+            <div class="max-w-md w-full slide-up-enter card p-5" style="animation-delay:.3s;">
+                <h3 class="section-title" style="color:var(--text)">${t('howToPlay')}</h3>
+                <ul class="space-y-2 text-sm" style="color:var(--text-muted)">
                     <li>• ${t('rule1')}</li><li>• ${t('rule2')}</li><li>• ${t('rule3')}</li><li>• ${t('rule4')}</li><li>• ${t('rule5')}</li>
                 </ul>
-                <div class="mt-4 p-3 rounded-xl" style="background:var(--primary-bg);">
-                    <div class="font-bold mb-1" style="color:var(--primary)">${t('qualityRef')}</div>
-                    <div class="flex flex-wrap gap-3 text-xs">
+                <div class="mt-4 p-4 rounded-2xl" style="background:var(--primary-bg);border:2px solid var(--border);">
+                    <div class="font-bold mb-2" style="color:var(--primary)">${t('qualityRef')}</div>
+                    <div class="flex flex-wrap gap-3 text-sm font-semibold">
                         ${Object.keys(ORIGINS).map(k=>`<span>${ORIGINS[k].emoji} ${originName(k)}</span>`).join('')}
                     </div>
                 </div>
@@ -811,36 +843,40 @@
         const cpnHtml=S.coupons.length?`<div class="flex gap-2 overflow-x-auto pb-1 mb-3">${S.coupons.map(c=>`<div class="coupon-ticket ${c.used?'used':''}" style="color:var(--coupon)">🎟️ ${couponDesc(c)}</div>`).join('')}</div>`:'';
 
         const slHtml=S.shopList.map(li=>`
-            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-bold ${li.found?'line-through':''}" style="background:${li.found?'var(--primary-bg)':'var(--accent-bg)'};opacity:${li.found?'0.5':'1'}">${li.emoji} ${itemName(li.baseId)} ${li.found?'✓':''}</span>
+            <span class="shop-list-tag ${li.found?'line-through':''}" style="background:${li.found?'var(--primary-bg)':'var(--accent-bg)'};opacity:${li.found?'0.5':'1'}">${li.emoji} ${itemName(li.baseId)} ${li.found?'✓':''}</span>
         `).join('');
 
         const iCards=items.map(it=>renderItemCard(it)).join('');
 
         return `
-        <div class="sticky top-0 z-30 pb-2 pt-1" style="background:var(--bg);">
-            <div class="flex items-center justify-between mb-2">
-                <button class="text-sm font-bold px-3 py-1 rounded-lg" style="background:var(--bg-card);border:1px solid var(--border)" data-action="back-home">${t('back')}</button>
-                <div class="text-sm font-extrabold" style="color:var(--primary)">${DIFF_ICONS[S.diff]} ${diffName(S.diff)}${t('mode')}</div>
-            </div>
-            <div class="flex items-center gap-3 mb-2">
-                <div class="flex-1">
-                    <div class="flex justify-between text-xs font-bold mb-1"><span>${t('budget')}</span><span style="color:${bCol}">HK$${S.spent} / HK$${S.budget}</span></div>
-                    <div class="progress-track"><div class="progress-fill" style="width:${bPct}%;background:${bCol}"></div></div>
+        <div class="sticky top-0 z-30 pb-2" style="background:var(--bg);">
+            <div class="header-bar">
+                <div class="flex items-center justify-between mb-2">
+                    <button class="pill-btn secondary" style="font-size:13px;padding:6px 14px;" data-action="back-home">${t('back')}</button>
+                    <div class="flex gap-2">
+                        <div class="stat-badge" style="background:var(--badge-green)"><span class="stat-label">${DIFF_ICONS[S.diff]}</span><span class="stat-value" style="font-size:13px;">${diffName(S.diff)}</span></div>
+                    </div>
                 </div>
-                <div class="flex-1">
-                    <div class="flex justify-between text-xs font-bold mb-1"><span>${t('progress')}</span><span style="color:var(--primary)">${found}/${total}</span></div>
-                    <div class="progress-track"><div class="progress-fill" style="width:${pPct}%;background:var(--primary)"></div></div>
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="flex-1">
+                        <div class="flex justify-between text-xs font-bold mb-1"><span>${t('budget')}</span><span style="color:${bCol}">HK$${S.spent} / HK$${S.budget}</span></div>
+                        <div class="progress-track"><div class="progress-fill" style="width:${bPct}%;background:${bCol}"></div></div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between text-xs font-bold mb-1"><span>${t('progress')}</span><span style="color:var(--primary)">${found}/${total}</span></div>
+                        <div class="progress-track"><div class="progress-fill" style="width:${pPct}%;background:var(--primary)"></div></div>
+                    </div>
                 </div>
+                <div class="flex flex-wrap gap-1.5">${slHtml}</div>
             </div>
-            <div class="flex flex-wrap gap-1.5 mb-2">${slHtml}</div>
             ${cpnHtml}
         </div>
 
-        <div class="flex overflow-x-auto gap-2 mb-3 pb-1" style="-webkit-overflow-scrolling:touch">${fTabs}</div>
+        <div class="flex overflow-x-auto gap-2 mb-3 pb-1 px-1" style="-webkit-overflow-scrolling:touch">${fTabs}</div>
 
-        <div class="flex justify-between items-center mb-3">
-            <span class="text-xs font-bold" style="color:var(--text-muted)">${items.length}${t('itemCount')}</span>
-            <select class="text-xs font-bold rounded-lg px-2 py-1.5" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);min-height:32px;font-size:16px" data-action="sort">
+        <div class="flex justify-between items-center mb-3 px-1">
+            <span class="text-sm font-bold" style="color:var(--text-muted)">${items.length}${t('itemCount')}</span>
+            <select class="text-sm font-bold rounded-xl px-3 py-2" style="background:var(--bg-card);border:2px solid var(--border);color:var(--text);min-height:36px;font-size:16px" data-action="sort">
                 <option value="default" ${S.sortBy==='default'?'selected':''}>${t('sortDefault')}</option>
                 <option value="price-asc" ${S.sortBy==='price-asc'?'selected':''}>${t('sortPriceAsc')}</option>
                 <option value="price-desc" ${S.sortBy==='price-desc'?'selected':''}>${t('sortPriceDesc')}</option>
@@ -849,18 +885,18 @@
         </div>
 
         <div class="flex gap-4">
-            <div class="flex-1"><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">${iCards}</div></div>
+            <div class="flex-1"><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">${iCards}</div></div>
             <div class="hidden lg:block w-72 flex-shrink-0"><div class="sticky top-44">${renderCartPanel(false)}</div></div>
         </div>
 
-        <button class="lg:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-2xl shadow-xl flex items-center justify-center text-2xl font-bold" style="background:var(--primary);color:#fff;" data-action="open-cart">🛒<span class="absolute -top-1 -right-1 w-6 h-6 rounded-full text-xs font-black flex items-center justify-center" style="background:var(--accent);color:#000;">${S.cart.length}</span></button>
+        <button class="lg:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold" style="background:var(--accent);color:var(--text);border:3px solid var(--border);box-shadow:0 4px 0 var(--border);" data-action="open-cart">🛒<span class="absolute -top-1 -right-1 w-7 h-7 rounded-full text-xs font-black flex items-center justify-center" style="background:var(--danger);color:#fff;border:2px solid var(--border);">${S.cart.length}</span></button>
 
         <div id="mobile-cart" class="${S.cartOpen?'':'hidden'} fixed inset-0 z-50">
-            <div class="absolute inset-0" style="background:rgba(0,0,0,.5)" data-action="close-cart"></div>
-            <div class="absolute bottom-0 left-0 right-0 rounded-t-2xl p-4 overflow-y-auto" style="background:var(--bg-card);max-height:80vh;">
+            <div class="absolute inset-0" style="background:rgba(0,0,0,.55)" data-action="close-cart"></div>
+            <div class="absolute bottom-0 left-0 right-0 rounded-t-3xl p-5 overflow-y-auto" style="background:var(--bg-card);max-height:80vh;border-top:3px solid var(--border);">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-black">${t('cart')}</h3>
-                    <button class="text-2xl" data-action="close-cart">✕</button>
+                    <button class="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold" style="background:var(--danger-bg);color:var(--danger);border:2px solid var(--border);" data-action="close-cart">✕</button>
                 </div>
                 ${renderCartPanel(true)}
             </div>
@@ -872,10 +908,9 @@
     function renderItemCard(it){
         const inCart=S.cart.includes(it.id), canAfford=S.spent+it.price<=S.budget;
         const onList=S.shopList.some(li=>li.baseId===it.baseId);
-        let cls='card p-3 cursor-pointer relative overflow-hidden';
-        if(inCart)cls+=' ring-2';
+        let cls='card p-4 cursor-pointer relative overflow-hidden';
         if(!canAfford&&!inCart)cls+=' item-card-unaffordable';
-        const ring=inCart?'outline:2px solid var(--primary);':'';
+        const ring=inCart?`outline:3px solid var(--primary);outline-offset:-3px;`:'';
 
         let freshH='';
         if(it.freshness&&it.freshness!=='fresh') freshH=`<div class="text-xs font-bold mt-1" style="color:${FRESHNESS[it.freshness].color}">${FRESHNESS[it.freshness].icon} ${freshName(it.freshness)}</div>`;
@@ -890,24 +925,26 @@
         }
 
         const uLbl=unitLabel(BASE_ITEMS.find(b=>b.id===it.baseId));
+        const pastelColors = ['var(--pastel-pink)','var(--pastel-mint)','var(--pastel-lavender)'];
+        const emojiCircleColor = pastelColors[it.baseId % 3];
 
         return `
         <div class="${cls}" style="${ring}" data-action="add-to-cart" data-item-id="${it.id}">
             <div class="flex justify-between items-start mb-1">
-                <span class="text-xs font-bold px-1.5 py-0.5 rounded" style="background:var(--bg);border:1px solid var(--border)">${ORIGINS[it.originKey].emoji} ${originName(it.originKey)}</span>
-                ${onList?'<span class="text-xs">📋</span>':''}
+                <span class="text-xs font-bold px-2 py-1 rounded-lg" style="background:var(--bg);border:1.5px solid var(--border)">${ORIGINS[it.originKey].emoji} ${originName(it.originKey)}</span>
+                ${onList?'<span class="text-xs font-bold px-1.5 py-0.5 rounded-lg" style="background:var(--accent-bg);border:1.5px solid var(--border);">📋</span>':''}
             </div>
             ${freshH}
-            <div class="text-center my-2">
-                <div class="text-3xl sm:text-4xl item-emoji-lg">${it.emoji}</div>
-                <div class="font-extrabold text-sm mt-1">${itemName(it.baseId)}</div>
-                <div class="text-xs" style="color:var(--text-muted)">${sizeLabel(it)}</div>
+            <div class="text-center my-3">
+                <div class="icon-circle mx-auto mb-2" style="width:52px;height:52px;background:${emojiCircleColor};"><span class="text-2xl sm:text-3xl item-emoji-lg">${it.emoji}</span></div>
+                <div class="font-extrabold text-sm">${itemName(it.baseId)}</div>
+                <div class="text-xs font-semibold" style="color:var(--text-muted)">${sizeLabel(it)}</div>
             </div>
             <div class="text-center">
                 ${priceH}
-                <div class="text-xs mt-0.5" style="color:var(--text-muted)">$${it.unitPrice.toFixed(1)}${uLbl}</div>
+                <div class="text-xs mt-1 font-semibold" style="color:var(--text-muted)">$${it.unitPrice.toFixed(1)}${uLbl}</div>
             </div>
-            ${inCart?`<div class="absolute inset-0 flex items-center justify-center" style="background:rgba(5,150,105,.15)"><span class="text-2xl font-black" style="color:var(--primary)">✓</span></div>`:''}
+            ${inCart?`<div class="absolute inset-0 flex items-center justify-center" style="background:rgba(42,181,115,.18);border-radius:16px;"><span class="text-3xl font-black" style="color:var(--primary);text-shadow:0 2px 4px rgba(0,0,0,.1);">✓</span></div>`:''}
         </div>`;
     }
 
@@ -915,15 +952,15 @@
         const cItems=S.cart.map(id=>S.store.find(i=>i.id===id)).filter(Boolean);
         let iHtml;
         if(!cItems.length){
-            iHtml=`<div class="text-center py-8" style="color:var(--text-muted)">${t('cartEmpty')}</div>`;
+            iHtml=`<div class="text-center py-8 font-bold" style="color:var(--text-muted)">${t('cartEmpty')}</div>`;
         } else {
             iHtml=cItems.map(it=>{
                 const uLbl=unitLabel(BASE_ITEMS.find(b=>b.id===it.baseId));
-                return `<div class="cart-item-enter flex items-center justify-between py-2 px-2 rounded-lg mb-1" style="background:var(--bg)">
+                return `<div class="cart-item-enter flex items-center justify-between py-2.5 px-3 rounded-xl mb-1.5" style="background:var(--bg);border:1.5px solid var(--border-light);">
                 <div class="flex items-center gap-2 flex-1 min-w-0"><span class="text-lg">${it.emoji}</span>
-                <div class="min-w-0"><div class="text-xs font-bold truncate">${itemName(it.baseId)}(${originName(it.originKey)})</div><div class="text-xs" style="color:var(--text-muted)">${sizeLabel(it)} · $${it.unitPrice.toFixed(1)}${uLbl}</div></div></div>
+                <div class="min-w-0"><div class="text-xs font-bold truncate">${itemName(it.baseId)}(${originName(it.originKey)})</div><div class="text-xs font-semibold" style="color:var(--text-muted)">${sizeLabel(it)} · $${it.unitPrice.toFixed(1)}${uLbl}</div></div></div>
                 <div class="flex items-center gap-2 flex-shrink-0"><span class="font-black text-sm">$${it.price}</span>
-                <button class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style="background:var(--danger-bg);color:var(--danger)" data-action="remove" data-item-id="${it.id}">✕</button></div></div>`;
+                <button class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style="background:var(--danger);color:#fff;border:1.5px solid var(--border);" data-action="remove" data-item-id="${it.id}">✕</button></div></div>`;
             }).join('');
         }
 
@@ -934,22 +971,22 @@
                 if(c.type==='cat'){const el=cItems.filter(i=>i.cat===c.cat);if(el.length)pv+=Math.min(c.disc,el[0].price);}
                 else if(c.type==='total'&&S.spent>=c.thresh)pv+=c.disc;
             });
-            if(pv>0) cpnPrev=`<div class="text-xs font-bold mt-1" style="color:var(--coupon)">${t('couponCanSave')} -HK$${pv}</div>`;
+            if(pv>0) cpnPrev=`<div class="text-xs font-bold mt-2" style="color:var(--coupon)">${t('couponCanSave')} -HK$${pv}</div>`;
         }
 
         const allFound=S.shopList.every(li=>li.found);
 
-        return `<div class="card p-4">
-            <h3 class="font-black text-lg mb-3">${t('cart')} (${S.cart.length})</h3>
+        return `<div class="card p-5">
+            <h3 class="section-title">${t('cart')} (${S.cart.length})</h3>
             <div style="max-height:${isMobile?'40vh':'300px'};overflow-y:auto;">${iHtml}</div>
-            <div class="border-t mt-3 pt-3" style="border-color:var(--border)">
+            <div class="border-t mt-3 pt-3" style="border-color:var(--border-light)">
                 <div class="flex justify-between font-black text-lg"><span>${t('total')}</span><span>HK$${S.spent}</span></div>
                 ${cpnPrev}
-                <div class="text-xs mt-1" style="color:var(--text-muted)">${t('remainBudget')}: HK$${S.budget-S.spent}</div>
+                <div class="text-xs mt-1 font-semibold" style="color:var(--text-muted)">${t('remainBudget')}: HK$${S.budget-S.spent}</div>
             </div>
-            <div class="flex gap-2 mt-3">
-                <button class="flex-1 py-2.5 rounded-xl font-bold text-sm" style="background:var(--danger-bg);color:var(--danger)" data-action="clear-cart">${t('clear')}</button>
-                <button class="flex-1 py-2.5 rounded-xl font-bold text-sm" style="background:${allFound?'var(--primary)':'var(--border)'};color:${allFound?'#fff':'var(--text-muted)'}" data-action="checkout" ${allFound?'':'disabled'}>${t('checkout')} ${allFound?'✓':''}</button>
+            <div class="flex gap-3 mt-4">
+                <button class="pill-btn danger flex-1" style="font-size:14px;padding:10px 16px;" data-action="clear-cart">${t('clear')}</button>
+                <button class="pill-btn flex-1" style="font-size:14px;padding:10px 16px;${allFound?'':'opacity:.4;pointer-events:none;'}" data-action="checkout" ${allFound?'':'disabled'}>${t('checkout')} ${allFound?'✓':''}</button>
             </div>
         </div>`;
     }
@@ -959,20 +996,20 @@
         const imp=S.currentImpulse;
         return `<div class="fixed inset-0 z-[60] flex items-center justify-center" id="impulse-overlay">
             <div class="absolute inset-0" style="background:rgba(0,0,0,.65)"></div>
-            <div class="relative mx-4 max-w-sm w-full rounded-2xl p-6 text-center impulse-flash" style="background:var(--bg-card)">
-                <div class="text-xs font-black mb-2 px-3 py-1 rounded-full inline-block" style="background:var(--danger);color:#fff">${t('flashSale')}</div>
-                <div class="text-5xl my-3">${imp.emoji}</div>
+            <div class="relative mx-4 max-w-sm w-full rounded-3xl p-6 text-center impulse-flash" style="background:var(--bg-card)">
+                <div class="discount-tag mb-3" style="font-size:12px;padding:5px 14px;">${t('flashSale')}</div>
+                <div class="icon-circle pink mx-auto mb-2" style="width:72px;height:72px;"><span class="text-4xl">${imp.emoji}</span></div>
                 <div class="font-extrabold text-xl mb-1">${itemName(imp.baseId)} (${originName(imp.originKey)})</div>
-                <div class="text-sm mb-2" style="color:var(--text-muted)">${sizeLabel(imp)}</div>
-                <div class="flex items-center justify-center gap-2 mb-2">
+                <div class="text-sm font-semibold mb-2" style="color:var(--text-muted)">${sizeLabel(imp)}</div>
+                <div class="flex items-center justify-center gap-2 mb-3">
                     <span class="line-through text-sm" style="color:var(--text-muted)">HK$${imp.impulseOriginal}</span>
                     <span class="text-2xl font-black" style="color:var(--danger)">HK$${imp.price}</span>
-                    <span class="text-xs font-bold px-2 py-0.5 rounded" style="background:var(--danger);color:#fff">-${imp.impulseDisc}%</span>
+                    <span class="discount-tag" style="animation:none;">-${imp.impulseDisc}%</span>
                 </div>
                 <div class="text-sm font-bold mb-4" style="color:var(--accent)" id="impulse-timer">⏱️ ${imp.countdown}${t('disappearIn')}</div>
                 <div class="flex gap-3">
-                    <button class="flex-1 py-3 rounded-xl font-bold" style="background:var(--border);color:var(--text)" data-action="reject-impulse">${t('noThanks')}</button>
-                    <button class="flex-1 py-3 rounded-xl font-bold" style="background:var(--danger);color:#fff" data-action="accept-impulse">${t('addToCartBtn')}</button>
+                    <button class="pill-btn secondary flex-1" data-action="reject-impulse">${t('noThanks')}</button>
+                    <button class="pill-btn danger flex-1" data-action="accept-impulse">${t('addToCartBtn')}</button>
                 </div>
             </div>
         </div>`;
@@ -998,8 +1035,8 @@
             {label:t('scoreSmart'),score:sc.smart}
         ];
         const starsH=cats.map((c,ci)=>{
-            const st=Array.from({length:5},(_,i)=>`<span class="star ${i<c.score?'filled':''}" style="animation-delay:${ci*0.15+i*0.08}s;color:${i<c.score?'var(--accent)':'var(--border)'}">${i<c.score?'★':'☆'}</span>`).join('');
-            return `<div class="flex items-center justify-between py-2"><span class="text-sm font-bold">${c.label}</span><div>${st}</div></div>`;
+            const st=Array.from({length:5},(_,i)=>`<span class="star ${i<c.score?'filled':''}" style="animation-delay:${ci*0.15+i*0.08}s;color:${i<c.score?'var(--accent)':'var(--border-light)'}">${i<c.score?'★':'☆'}</span>`).join('');
+            return `<div class="flex items-center justify-between py-2.5 px-2 rounded-xl mb-1" style="background:var(--bg)"><span class="text-sm font-bold">${c.label}</span><div>${st}</div></div>`;
         }).join('');
 
         const analysis=S.cart.map(id=>{
@@ -1008,57 +1045,57 @@
             const uLbl=unitLabel(BASE_ITEMS.find(b=>b.id===it.baseId));
             const nm=itemName(it.baseId), on=originName(it.originKey);
 
-            if(sb.length<=1)return `<div class="py-2 px-3 rounded-lg mb-2" style="background:var(--bg)"><span class="text-sm">${it.emoji} ${nm}(${on}) ${sizeLabel(it)} — <strong>HK$${it.price}</strong></span><span class="text-xs ml-1" style="color:var(--text-muted)">${t('badgeOnly')}</span></div>`;
+            if(sb.length<=1)return `<div class="py-3 px-4 rounded-xl mb-2" style="background:var(--bg);border:1.5px solid var(--border-light);"><span class="text-sm font-semibold">${it.emoji} ${nm}(${on}) ${sizeLabel(it)} — <strong>HK$${it.price}</strong></span><span class="text-xs ml-1 font-bold" style="color:var(--text-muted)">${t('badgeOnly')}</span></div>`;
 
             const bestUP=Math.min(...sb.map(si=>si.unitPrice));
             const isOpt=Math.abs(it.unitPrice-bestUP)/bestUP<0.05;
             const fell=it.fakeDisc&&!isOpt;
 
             let badge,bStyle;
-            if(fell){badge=t('badgeTrap');bStyle='background:var(--danger-bg);color:var(--danger)';}
-            else if(isOpt){badge=t('badgeBest');bStyle='background:var(--primary-bg);color:var(--primary)';}
-            else {badge=t('badgeOk');bStyle='background:var(--accent-bg);color:var(--accent)';}
+            if(fell){badge=t('badgeTrap');bStyle='background:var(--danger-bg);color:var(--danger);border:1.5px solid var(--danger);';}
+            else if(isOpt){badge=t('badgeBest');bStyle='background:var(--primary-bg);color:var(--primary);border:1.5px solid var(--primary);';}
+            else {badge=t('badgeOk');bStyle='background:var(--accent-bg);color:var(--accent);border:1.5px solid var(--accent);';}
 
             const dLabels=t('discLabels');
             const alts=sb.filter(si=>si.id!==it.id).map(si=>`${ORIGINS[si.originKey].emoji}${originName(si.originKey)} ${sizeLabel(si)} $${si.price} ($${si.unitPrice.toFixed(1)}${uLbl})`).join(', ');
 
-            return `<div class="py-2 px-3 rounded-lg mb-2" style="background:var(--bg)">
-                <div class="flex items-center justify-between flex-wrap gap-1"><span class="text-sm font-bold">${it.emoji} ${nm}(${on}) ${sizeLabel(it)}</span><span class="text-xs font-bold px-2 py-0.5 rounded" style="${bStyle}">${badge}</span></div>
-                <div class="text-xs mt-1">HK$${it.price} · $${it.unitPrice.toFixed(1)}${uLbl} ${it.fakeDisc?`<span style="color:var(--danger)">「${dLabels[it.discLabelIdx]}」</span>`:''}</div>
-                ${alts?`<div class="text-xs mt-1" style="color:var(--text-muted)">${t('others')}: ${alts}</div>`:''}
+            return `<div class="py-3 px-4 rounded-xl mb-2" style="background:var(--bg);border:1.5px solid var(--border-light);">
+                <div class="flex items-center justify-between flex-wrap gap-1"><span class="text-sm font-bold">${it.emoji} ${nm}(${on}) ${sizeLabel(it)}</span><span class="text-xs font-bold px-2 py-1 rounded-lg" style="${bStyle}">${badge}</span></div>
+                <div class="text-xs mt-1 font-semibold">HK$${it.price} · $${it.unitPrice.toFixed(1)}${uLbl} ${it.fakeDisc?`<span style="color:var(--danger)">「${dLabels[it.discLabelIdx]}」</span>`:''}</div>
+                ${alts?`<div class="text-xs mt-1 font-semibold" style="color:var(--text-muted)">${t('others')}: ${alts}</div>`:''}
             </div>`;
         }).join('');
 
-        const tipsH=tips.map(x=>`<li class="text-sm py-1">${x}</li>`).join('');
+        const tipsH=tips.map(x=>`<li class="text-sm py-1.5">${x}</li>`).join('');
 
-        const impH=S.impulseCount>0?`<div class="py-2 px-3 rounded-lg mb-3" style="background:var(--info-bg)"><div class="text-sm font-bold" style="color:var(--info)">${t('impulseStats')}</div><div class="text-xs mt-1">${t('appeared')} ${S.impulseCount}${t('times')} · ${t('accepted')} ${S.impulseAccepted}${t('times')} · ${t('rejected')} ${S.impulseRejected}${t('times')}</div></div>`:'';
-        const cpnH=S.couponSavings>0?`<div class="py-2 px-3 rounded-lg mb-3" style="background:var(--coupon-bg)"><div class="text-sm font-bold" style="color:var(--coupon)">${t('couponSaved')}</div><div class="text-xs mt-1">-HK$${S.couponSavings}</div></div>`:'';
+        const impH=S.impulseCount>0?`<div class="card p-4 mb-4 slide-up-enter" style="animation-delay:.25s;"><div class="text-sm font-bold" style="color:var(--info)">${t('impulseStats')}</div><div class="text-sm mt-1 font-semibold">${t('appeared')} ${S.impulseCount}${t('times')} · ${t('accepted')} ${S.impulseAccepted}${t('times')} · ${t('rejected')} ${S.impulseRejected}${t('times')}</div></div>`:'';
+        const cpnH=S.couponSavings>0?`<div class="card p-4 mb-4 slide-up-enter" style="animation-delay:.25s;"><div class="text-sm font-bold" style="color:var(--coupon)">${t('couponSaved')}</div><div class="text-sm mt-1 font-bold">-HK$${S.couponSavings}</div></div>`:'';
 
         return `<div class="max-w-lg mx-auto py-6">
-            <div class="text-center mb-6 slide-up-enter">
+            <div class="header-bar text-center mb-6 slide-up-enter" style="border-radius:20px;">
                 <div class="grade-badge mx-auto mb-3" style="background:${grade.bg};color:${grade.color}">${grade.letter}</div>
                 <h2 class="text-2xl font-black mb-1">${t('shopDone')}</h2>
-                <div class="text-lg font-bold" style="color:var(--accent)">⭐ ${sc.overall}/5</div>
+                <div class="text-lg font-bold" style="color:var(--text);">⭐ ${sc.overall}/5</div>
             </div>
 
-            <div class="card p-4 mb-4 slide-up-enter" style="animation-delay:.1s"><h3 class="font-extrabold mb-2">${t('scoreDetail')}</h3>${starsH}</div>
+            <div class="card p-5 mb-4 slide-up-enter" style="animation-delay:.1s"><h3 class="section-title">${t('scoreDetail')}</h3>${starsH}</div>
 
-            <div class="card p-4 mb-4 slide-up-enter" style="animation-delay:.2s">
-                <h3 class="font-extrabold mb-2">${t('spendSummary')}</h3>
-                <div class="text-sm space-y-1">
-                    <div class="flex justify-between"><span>${t('shopSpend')}</span><span class="font-bold">HK$${S.spent}</span></div>
-                    ${S.couponSavings>0?`<div class="flex justify-between" style="color:var(--coupon)"><span>${t('couponDiscount')}</span><span class="font-bold">-HK$${S.couponSavings}</span></div>`:''}
-                    <div class="flex justify-between border-t pt-1" style="border-color:var(--border)"><span class="font-bold">${t('actualPaid')}</span><span class="font-bold">HK$${effTotal}</span></div>
-                    <div class="flex justify-between"><span>${t('budgetLabel')}</span><span>HK$${S.budget}</span></div>
-                    <div class="flex justify-between" style="color:var(--primary)"><span>${t('saved')}</span><span class="font-bold">HK$${S.budget-effTotal}</span></div>
+            <div class="card p-5 mb-4 slide-up-enter" style="animation-delay:.2s">
+                <h3 class="section-title">${t('spendSummary')}</h3>
+                <div class="text-sm space-y-2">
+                    <div class="flex justify-between font-semibold"><span>${t('shopSpend')}</span><span class="font-bold">HK$${S.spent}</span></div>
+                    ${S.couponSavings>0?`<div class="flex justify-between font-semibold" style="color:var(--coupon)"><span>${t('couponDiscount')}</span><span class="font-bold">-HK$${S.couponSavings}</span></div>`:''}
+                    <div class="flex justify-between border-t pt-2 font-bold" style="border-color:var(--border-light)"><span>${t('actualPaid')}</span><span>HK$${effTotal}</span></div>
+                    <div class="flex justify-between font-semibold"><span>${t('budgetLabel')}</span><span>HK$${S.budget}</span></div>
+                    <div class="flex justify-between font-bold" style="color:var(--primary)"><span>${t('saved')}</span><span>HK$${S.budget-effTotal}</span></div>
                 </div>
             </div>
 
             ${impH}${cpnH}
 
-            <div class="card p-4 mb-4 slide-up-enter" style="animation-delay:.3s"><h3 class="font-extrabold mb-2">${t('choiceAnalysis')}</h3><div style="max-height:300px;overflow-y:auto">${analysis}</div></div>
-            <div class="card p-4 mb-4 slide-up-enter" style="animation-delay:.4s"><h3 class="font-extrabold mb-2">${t('shoppingTips')}</h3><ul class="space-y-1">${tipsH}</ul></div>
-            <div class="text-center slide-up-enter" style="animation-delay:.5s"><button class="px-8 py-3 rounded-xl font-black text-lg" style="background:var(--primary);color:#fff" data-action="play-again">${t('backHome')}</button></div>
+            <div class="card p-5 mb-4 slide-up-enter" style="animation-delay:.3s"><h3 class="section-title">${t('choiceAnalysis')}</h3><div style="max-height:300px;overflow-y:auto">${analysis}</div></div>
+            <div class="card p-5 mb-4 slide-up-enter" style="animation-delay:.4s"><h3 class="section-title">${t('shoppingTips')}</h3><ul class="space-y-1">${tipsH}</ul></div>
+            <div class="text-center slide-up-enter" style="animation-delay:.5s"><button class="pill-btn" style="font-size:17px;padding:14px 32px;" data-action="play-again">${t('backHome')}</button></div>
         </div>`;
     }
 
@@ -1106,4 +1143,5 @@
     </script>
 </body>
 </html>
+
 
